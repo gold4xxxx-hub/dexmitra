@@ -447,7 +447,7 @@ function App() {
             <div className="action-heading"><div><p className="eyebrow">CONTRACT ACTIONS</p><h2>Manage account</h2></div><span className="action-chain">BSC</span></div>
             <div className="action-tabs" role="tablist" aria-label="Contract action">
               {(['register', 'invest', 'withdraw', 'reinvest', 'upgrade'] as Action[]).map((tab, index) => (
-                <button className={`${action === tab ? 'selected' : ''} ${tab === 'upgrade' ? 'action-utility' : ''}`} type="button" role="tab" aria-selected={action === tab} key={tab} onClick={() => selectedTab(tab)}>
+                <button className={`action-tab action-tab-${tab} ${action === tab ? 'selected' : ''} ${tab === 'upgrade' ? 'action-utility' : ''}`} type="button" role="tab" aria-selected={action === tab} key={tab} onClick={() => selectedTab(tab)}>
                   {tab !== 'upgrade' && <span className="action-step">0{index + 1}</span>}
                   <span>{tab === 'upgrade' ? 'Plan' : tab}</span>
                 </button>
@@ -481,7 +481,7 @@ function App() {
               </>}
 
               <div className="form-summary"><span>{action === 'invest' ? 'Method' : action === 'register' ? 'Method' : action === 'upgrade' ? 'Method' : 'Contract method'}</span><strong>{action === 'upgrade' ? 'upgradePlan' : action}</strong></div>
-              <button className="submit-button" type="submit" disabled={busy || !account || loading || Boolean(terms?.paused) || (action === 'register' && Boolean(summary?.registered))}>
+              <button className={`submit-button action-button-${action}`} type="submit" disabled={busy || !account || loading || Boolean(terms?.paused) || (action === 'register' && Boolean(summary?.registered))}>
                 {busy ? <><LoaderCircle className="spin" size={16} /> Processing</> : <>{action === 'withdraw' ? <ArrowUpRight size={16} /> : <ArrowDownLeft size={16} />}{action === 'upgrade' ? 'Confirm plan change' : action === 'register' ? 'Register account' : `${action[0].toUpperCase()}${action.slice(1)}`}</>}
               </button>
               {!account && <p className="connect-hint">Connect a wallet to enable transactions.</p>}
