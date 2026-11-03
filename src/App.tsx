@@ -128,7 +128,7 @@ function App() {
   const [tokenSymbol, setTokenSymbol] = useState<string>(PAYMENT_TOKENS[0].symbol)
   const [tokenDecimals, setTokenDecimals] = useState(18)
   const [tokenAllowed, setTokenAllowed] = useState<boolean | null>(null)
-  const [action, setAction] = useState<Action>('invest')
+  const [action, setAction] = useState<Action>('register')
   const [amount, setAmount] = useState('')
   const [referrer, setReferrer] = useState('')
   const [plan, setPlan] = useState('0')
@@ -452,8 +452,11 @@ function App() {
           <aside className="action-panel">
             <div className="action-heading"><div><p className="eyebrow">CONTRACT ACTIONS</p><h2>Manage account</h2></div><span className="action-chain">BSC</span></div>
             <div className="action-tabs" role="tablist" aria-label="Contract action">
-              {(['invest', 'withdraw', 'reinvest', 'register', 'upgrade'] as Action[]).map((tab) => (
-                <button className={action === tab ? 'selected' : ''} type="button" role="tab" aria-selected={action === tab} key={tab} onClick={() => selectedTab(tab)}>{tab === 'upgrade' ? 'Plan' : tab}</button>
+              {(['register', 'invest', 'withdraw', 'reinvest', 'upgrade'] as Action[]).map((tab, index) => (
+                <button className={`${action === tab ? 'selected' : ''} ${tab === 'upgrade' ? 'action-utility' : ''}`} type="button" role="tab" aria-selected={action === tab} key={tab} onClick={() => selectedTab(tab)}>
+                  {tab !== 'upgrade' && <span className="action-step">0{index + 1}</span>}
+                  <span>{tab === 'upgrade' ? 'Plan' : tab}</span>
+                </button>
               ))}
             </div>
             <form className="action-form" onSubmit={(event) => void submitAction(event)}>
