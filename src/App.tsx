@@ -347,12 +347,6 @@ function App() {
       </header>
 
       <main id="top" className="main-content">
-        <section className="risk-banner" aria-label="Contract risk notice">
-          <ShieldAlert size={18} />
-          <p><strong>High-risk contract.</strong> Audit status has not been verified. This interface is not an endorsement; review the contract and understand the risk of loss before transacting.</p>
-          <a href={`https://bscscan.com/address/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer">View contract <ExternalLink size={13} /></a>
-        </section>
-
         <div className="page-heading">
           <div>
             <p className="eyebrow">ACCOUNT CONSOLE <span>·</span> BSC MAINNET</p>

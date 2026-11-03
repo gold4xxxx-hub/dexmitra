@@ -26,11 +26,6 @@
 .wallet-button.connected { background: #fff; border-color: var(--line); color: var(--ink); }
 .wallet-button.connected .wallet-dot { background: var(--green); }
 .main-content { width: min(1320px, 100%); margin: 0 auto; padding: 24px clamp(16px, 4vw, 48px) 28px; }
-.risk-banner { display: grid; grid-template-columns: 19px 1fr auto; align-items: center; gap: 12px; padding: 12px 15px; border: 1px solid #e6d5bd; border-radius: 6px; background: #fff9ee; color: #745a35; font-size: 12px; line-height: 1.5; animation: enter .4s ease both; }
-.risk-banner > svg { color: #a76d22; }
-.risk-banner p { margin: 0; }
-.risk-banner strong { color: #593a1d; }
-.risk-banner a { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; color: #745a35; font-weight: 700; }
 .page-heading { display: flex; align-items: flex-end; justify-content: space-between; padding: 34px 0 22px; animation: enter .45s .04s ease both; }
 .eyebrow { margin: 0 0 8px; color: #758077; font: 500 10px/1.2 var(--mono); letter-spacing: 0; }
 .eyebrow span { color: #9baa8f; }
@@ -143,8 +138,6 @@ td small { color: #8c968e; font: 9px var(--mono); }
 @media (max-width: 760px) {
   .topbar { height: 62px; padding: 0 16px; }
   .main-content { padding: 16px 14px 22px; }
-  .risk-banner { grid-template-columns: 18px 1fr; gap: 8px 10px; }
-  .risk-banner a { grid-column: 2; justify-self: start; }
   .page-heading { padding: 26px 0 17px; }
   h1 { font-size: 26px; }
   .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -197,7 +190,6 @@ td small { color: #8c968e; font: 9px var(--mono); }
   .action-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; }
   .action-tabs button { min-height: 42px; padding: 0 4px 9px; font-size: 11px; }
   .terms-row:not(.terms-head) { font-size: 11px; }
-  .risk-banner { padding: 11px; }
   .feedback { font-size: 11px; }
 }
 @media (prefers-reduced-motion: reduce) {
