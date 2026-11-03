@@ -160,16 +160,42 @@ td small { color: #8c968e; font: 9px var(--mono); }
   .term-plan { gap: 5px; }
   .plan-number { width: 19px; height: 19px; }
   .page-footer { flex-direction: column; gap: 8px; }
+  .action-tabs button { min-height: 40px; }
+  .table-wrap { overflow: visible; }
+  table, tbody { display: block; width: 100%; }
+  thead { display: none; }
+  tbody tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; padding: 14px; border-top: 1px solid #edf0eb; }
+  td { display: flex; min-width: 0; flex-direction: column; gap: 4px; padding: 0; border: 0; overflow-wrap: anywhere; }
+  td::before { color: #89938b; content: attr(data-label); font: 9px var(--mono); }
+  td:first-child { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; padding: 0; }
+  td:first-child::before { margin-right: auto; }
+  .position-date { margin: 0 0 0 10px; }
+  td small { display: inline; }
+  .terms-table { margin-top: 12px; }
+  .terms-row.terms-head { display: none; }
+  .terms-row:not(.terms-head) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; padding: 12px 0; }
+  .terms-row:not(.terms-head) > span { min-width: 0; }
+  .terms-row:not(.terms-head) > span:nth-child(2),
+  .terms-row:not(.terms-head) > span:nth-child(3) { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+  .terms-row:not(.terms-head) > span:nth-child(2)::before { color: #89938b; content: 'Multiplier'; font: 9px var(--mono); }
+  .terms-row:not(.terms-head) > span:nth-child(3)::before { color: #89938b; content: 'Monthly rate'; font: 9px var(--mono); }
+  .terms-row:not(.terms-head) > span:nth-child(4) { grid-column: 1 / -1; display: flex; flex-direction: row; align-items: center; justify-content: space-between; }
+  .terms-row:not(.terms-head) > span:nth-child(4)::before { color: #89938b; content: 'Directs required'; font: 9px var(--mono); }
 }
 @media (max-width: 440px) {
   .network-pill { display: none; }
   .wallet-button { min-width: 0; padding: 0 10px; font-size: 11px; }
-  .contract-strip { gap: 8px; padding: 0 9px; }
+  .contract-strip { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; padding: 8px 9px; }
   .contract-label { font-size: 8px; }
   .contract-strip code { font-size: 9px; }
+  .contract-strip > a { justify-self: end; }
+  .status-chip { grid-column: 1 / -1; justify-self: start; margin-left: 0; }
   .status-chip { gap: 5px; padding: 5px 6px; font-size: 8px; }
-  .terms-row { grid-template-columns: 1.15fr .55fr .73fr .88fr; font-size: 9px; }
-  .terms-head { font-size: 7px; }
+  .action-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; }
+  .action-tabs button { min-height: 42px; padding: 0 4px 9px; font-size: 11px; }
+  .terms-row:not(.terms-head) { font-size: 11px; }
+  .risk-banner { padding: 11px; }
+  .feedback { font-size: 11px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }

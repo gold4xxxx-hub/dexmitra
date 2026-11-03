@@ -413,11 +413,11 @@ function App() {
                     <thead><tr><th>Position</th><th>Principal</th><th>Earned</th><th>Cap</th><th>Status</th></tr></thead>
                     <tbody>{investments.map((item, index) => (
                       <tr key={`${item.startedAt}-${index}`}>
-                        <td><span className="position-name">#{investments.length - index}</span><span className="position-date">{new Date(Number(item.startedAt) * 1000).toLocaleDateString()}</span></td>
-                        <td>{prettyAmount(item.amount, unitDecimals)} <small>units</small></td>
-                        <td>{prettyAmount(item.earned + item.otherEarned, unitDecimals)} <small>units</small></td>
-                        <td>{prettyAmount(item.cap, unitDecimals)} <small>units</small></td>
-                        <td><span className={`row-status ${item.active ? 'active' : ''}`}><span />{item.active ? 'Active' : 'Closed'}</span></td>
+                        <td data-label="Position"><span className="position-name">#{investments.length - index}</span><span className="position-date">{new Date(Number(item.startedAt) * 1000).toLocaleDateString()}</span></td>
+                        <td data-label="Principal">{prettyAmount(item.amount, unitDecimals)} <small>units</small></td>
+                        <td data-label="Earned">{prettyAmount(item.earned + item.otherEarned, unitDecimals)} <small>units</small></td>
+                        <td data-label="Cap">{prettyAmount(item.cap, unitDecimals)} <small>units</small></td>
+                        <td data-label="Status"><span className={`row-status ${item.active ? 'active' : ''}`}><span />{item.active ? 'Active' : 'Closed'}</span></td>
                       </tr>
                     ))}</tbody>
                   </table>
