@@ -350,7 +350,7 @@ function App() {
         <div className="page-heading">
           <div>
             <p className="eyebrow">ACCOUNT CONSOLE <span>·</span> BSC MAINNET</p>
-            <h1>Contract dashboard</h1>
+            <h1>Dashboard</h1>
             <p className="subheading">A direct view of your account and the contract state.</p>
           </div>
           <button className="icon-button refresh-button" type="button" onClick={() => setRefreshVersion((version) => version + 1)} aria-label="Refresh contract data" title="Refresh">
