@@ -25,7 +25,7 @@ import {
   type Address,
 } from 'viem'
 import { bsc } from 'viem/chains'
-import { contractAbi, erc20Abi, CONTRACT_ADDRESS } from './contract'
+import { contractAbi, erc20Abi, CONTRACT_ADDRESS, PAYMENT_TOKENS } from './contract'
 import './dashboard.css'
 
 type EthereumProvider = {
@@ -121,8 +121,11 @@ function App() {
   const [summary, setSummary] = useState<UserSummary | null>(null)
   const [investments, setInvestments] = useState<Investment[]>([])
   const [terms, setTerms] = useState<ContractTerms | null>(null)
-  const [tokenAddress, setTokenAddress] = useState(() => localStorage.getItem('dexmitra-token') ?? '')
-  const [tokenSymbol, setTokenSymbol] = useState('TOKEN')
+  const [tokenAddress, setTokenAddress] = useState<string>(() => {
+    const savedToken = localStorage.getItem('dexmitra-token')
+    return PAYMENT_TOKENS.find((token) => token.address.toLowerCase() === savedToken?.toLowerCase())?.address ?? PAYMENT_TOKENS[0].address
+  })
+  const [tokenSymbol, setTokenSymbol] = useState<string>(PAYMENT_TOKENS[0].symbol)
   const [tokenDecimals, setTokenDecimals] = useState(18)
   const [tokenAllowed, setTokenAllowed] = useState<boolean | null>(null)
   const [action, setAction] = useState<Action>('invest')
@@ -454,9 +457,9 @@ function App() {
               ))}
             </div>
             <form className="action-form" onSubmit={(event) => void submitAction(event)}>
-              {action !== 'upgrade' && <label className="field-label" htmlFor="token-address">Payment token</label>}
-              {action !== 'upgrade' && <div className="token-input-wrap"><input id="token-address" value={tokenAddress} onChange={(event) => setTokenAddress(event.target.value.trim())} placeholder="0x token contract address" spellCheck={false} autoComplete="off" />{tokenAllowed === true && <Check size={16} className="valid-icon" />}</div>}
-              {action !== 'upgrade' && <div className={`token-validation ${tokenAllowed === true ? 'valid' : tokenAllowed === false ? 'invalid' : ''}`}>{tokenAllowed === true ? `${tokenSymbol} · ${tokenDecimals} decimals · allowed by contract` : tokenAllowed === false ? 'Token could not be validated or is not allowed' : 'Enter a token address to validate it on-chain'}</div>}
+              {!['upgrade', 'reinvest'].includes(action) && <label className="field-label" htmlFor="token-address">Payment token</label>}
+              {!['upgrade', 'reinvest'].includes(action) && <select id="token-address" value={tokenAddress} onChange={(event) => setTokenAddress(event.target.value)}>{PAYMENT_TOKENS.map((token) => <option value={token.address} key={token.address}>{token.symbol} · {token.name}</option>)}</select>}
+              {!['upgrade', 'reinvest'].includes(action) && <div className={`token-validation ${tokenAllowed === true ? 'valid' : tokenAllowed === false ? 'invalid' : ''}`}>{tokenAllowed === true ? `${tokenSymbol} · ${tokenDecimals} decimals · allowed by contract` : tokenAllowed === false ? 'Token is not allowed by the contract' : 'Checking token with the contract...'}</div>}
 
               {action === 'register' && <>
                 <label className="field-label" htmlFor="referrer">Referrer address</label>
@@ -474,7 +477,7 @@ function App() {
 
               {['invest', 'withdraw', 'reinvest'].includes(action) && <>
                 <label className="field-label" htmlFor="amount">Amount</label>
-                <div className="amount-wrap"><input id="amount" type="number" min="0" step="any" inputMode="decimal" value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="0.00" required /><span>{tokenSymbol}</span></div>
+                <div className="amount-wrap"><input id="amount" type="number" min="0" step="any" inputMode="decimal" value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="0.00" required /><span>{action === 'reinvest' ? 'units' : tokenSymbol}</span></div>
                 {action === 'invest' && terms && <p className="form-hint">Range: {prettyAmount(terms.minInvest, tokenDecimals)} to {prettyAmount(terms.maxInvest, tokenDecimals)} {tokenSymbol}</p>}
                 {action === 'withdraw' && <p className="form-hint">Available: {prettyAmount(summary?.withdrawable, unitDecimals)} contract units</p>}
                 {action === 'reinvest' && <p className="form-hint">Reinvest amount uses the contract's {unitDecimals}-decimal internal unit.</p>}

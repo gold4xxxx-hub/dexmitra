@@ -2,6 +2,11 @@ import type { Abi, Address } from 'viem'
 
 export const CONTRACT_ADDRESS = '0x47be6b78dC569764d474515e177109Ba67D3c123' as Address
 
+export const PAYMENT_TOKENS = [
+  { symbol: 'USDT', name: 'Tether USD', address: '0x55d398326f99059ff775485246999027b3197955' as Address },
+  { symbol: 'GC', name: 'GC Token', address: '0x5C0D286F3812Da7f6bd766b7AAdadC7059938de8' as Address },
+] as const
+
 export const contractAbi = [
   { type: 'function', name: 'allowedToken', stateMutability: 'view', inputs: [{ name: 'token', type: 'address' }], outputs: [{ name: '', type: 'bool' }] },
   { type: 'function', name: 'tokenDecimals', stateMutability: 'view', inputs: [{ name: 'token', type: 'address' }], outputs: [{ name: '', type: 'uint8' }] },
