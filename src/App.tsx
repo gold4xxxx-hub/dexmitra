@@ -286,8 +286,11 @@ function App() {
 
       if (action === 'register') {
         if (!token || !isAddress(referrer)) throw new Error('Enter a valid payment token and referrer address.')
-        const referrerSummary = await publicClient.readContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'getUserSummary', args: [getAddress(referrer)] }) as unknown as UserSummary
-        if (!referrerSummary.registered) throw new Error('Referrer is not registered. Use an already-registered account address.')
+        const referrerAddress = getAddress(referrer)
+        if (referrerAddress !== '0x0000000000000000000000000000000000000000') {
+          const referrerSummary = await publicClient.readContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'getUserSummary', args: [referrerAddress] }) as unknown as UserSummary
+          if (!referrerSummary.registered) throw new Error('Referrer is not registered. Use 0x0...0 for the first/root registration, or an already-registered account.')
+        }
         await approveToken(terms.registrationFee / tokenScale)
         hash = await client.writeContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'register', args: [getAddress(referrer), Number(plan), token] })
       } else if (action === 'invest') {
@@ -466,7 +469,7 @@ function App() {
               {action === 'register' && <>
                 <label className="field-label" htmlFor="referrer">Referrer address</label>
                 <input id="referrer" value={referrer} onChange={(event) => setReferrer(event.target.value.trim())} placeholder="0x..." spellCheck={false} autoComplete="off" />
-                <p className="form-hint">Must be an already-registered account address.</p>
+                <p className="form-hint">Use 0x0000…0000 for the first/root registration, or an already-registered account.</p>
                 <label className="field-label" htmlFor="registration-plan">Plan</label>
                 <select id="registration-plan" value={plan} onChange={(event) => setPlan(event.target.value)}>{(terms?.plans ?? [0, 1, 2]).map((planId, index) => <option value={planId} key={planId}>Plan {planNames[index]}</option>)}</select>
                 <div className="read-only-value"><span>Registration fee</span><strong>{prettyAmount(terms ? terms.registrationFee / tokenScale : undefined, tokenDecimals)} {tokenSymbol}</strong></div>
