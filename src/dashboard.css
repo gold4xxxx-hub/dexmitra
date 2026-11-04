@@ -39,6 +39,8 @@ h2 { font-size: 17px; line-height: 1.25; font-weight: 600; }
 .contract-label { color: #718075; font: 500 9px var(--mono); letter-spacing: 0; }
 .contract-strip code { min-width: 0; overflow: hidden; color: #35433a; text-overflow: ellipsis; white-space: nowrap; font: 12px var(--mono); }
 .contract-strip > a { display: inline-flex; color: #617267; }
+.contract-balance { display: inline-flex; align-items: center; gap: 7px; padding: 5px 8px; border-radius: 4px; background: #f8fff8; color: #34714d; font-size: 10px; font-weight: 700; white-space: nowrap; }
+.contract-balance .contract-label { color: #718075; font: 500 9px var(--mono); }
 .status-chip { display: inline-flex; align-items: center; gap: 7px; margin-left: auto; padding: 5px 8px; border-radius: 4px; background: #f8fff8; color: #34714d; font-size: 10px; font-weight: 700; white-space: nowrap; }
 .status-chip > span, .live-read > span, .row-status > span { width: 6px; height: 6px; border-radius: 50%; background: #5da879; }
 .status-chip.is-paused { background: #fff3f0; color: #a53e36; }

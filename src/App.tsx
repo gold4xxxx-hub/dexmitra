@@ -129,6 +129,7 @@ function App() {
   const [tokenSymbol, setTokenSymbol] = useState<string>(PAYMENT_TOKENS[0].symbol)
   const [tokenDecimals, setTokenDecimals] = useState(18)
   const [tokenAllowed, setTokenAllowed] = useState<boolean | null>(null)
+  const [contractTokenBalance, setContractTokenBalance] = useState<bigint | null>(null)
   const [action, setAction] = useState<Action>('register')
   const [amount, setAmount] = useState('')
   const [referrer, setReferrer] = useState('')
@@ -200,19 +201,22 @@ function App() {
       }
       try {
         const token = getAddress(tokenAddress)
-        const [symbol, decimals, allowed] = await Promise.all([
+        const [symbol, decimals, allowed, balance] = await Promise.all([
           publicClient.readContract({ address: token, abi: erc20Abi, functionName: 'symbol' }),
           publicClient.readContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'tokenDecimals', args: [token] }),
           publicClient.readContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'allowedToken', args: [token] }),
+          publicClient.readContract({ address: token, abi: [{ type: 'function', name: 'balanceOf', stateMutability: 'view', inputs: [{ name: 'a', type: 'address' }], outputs: [{ name: '', type: 'uint256' }] }] as const, functionName: 'balanceOf', args: [CONTRACT_ADDRESS] }) as unknown as Promise<bigint>,
         ])
         if (!active) return
         setTokenSymbol(symbol)
         setTokenDecimals(Number(decimals))
         setTokenAllowed(allowed)
+        setContractTokenBalance(balance as unknown as bigint)
       } catch {
         if (active) {
           setTokenSymbol('TOKEN')
           setTokenAllowed(false)
+          setContractTokenBalance(null)
         }
       }
     }
@@ -372,6 +376,7 @@ function App() {
           <span className="contract-label">CONTRACT</span>
           <code>{CONTRACT_ADDRESS}</code>
           <a href={`https://bscscan.com/address/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer" aria-label="Open contract on BscScan"><ExternalLink size={15} /></a>
+          <span className="contract-balance"><span className="contract-label">BALANCE</span> {prettyAmount(contractTokenBalance ?? undefined, tokenDecimals)} {tokenSymbol}</span>
           <span className={`status-chip ${terms?.paused ? 'is-paused' : 'is-live'}`}><span />{terms?.paused ? 'Paused' : 'Contract active'}</span>
         </section>
 
