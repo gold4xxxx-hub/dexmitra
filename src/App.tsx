@@ -129,7 +129,8 @@ function App() {
   const [tokenSymbol, setTokenSymbol] = useState<string>(PAYMENT_TOKENS[0].symbol)
   const [tokenDecimals, setTokenDecimals] = useState(18)
   const [tokenAllowed, setTokenAllowed] = useState<boolean | null>(null)
-  const [contractTokenBalance, setContractTokenBalance] = useState<bigint | null>(null)
+  const [contractUsdtBalance, setContractUsdtBalance] = useState<bigint | null>(null)
+  const [contractGcBalance, setContractGcBalance] = useState<bigint | null>(null)
   const [action, setAction] = useState<Action>('register')
   const [amount, setAmount] = useState('')
   const [referrer, setReferrer] = useState('')
@@ -201,28 +202,50 @@ function App() {
       }
       try {
         const token = getAddress(tokenAddress)
-        const [symbol, decimals, allowed, balance] = await Promise.all([
+        const [symbol, decimals, allowed] = await Promise.all([
           publicClient.readContract({ address: token, abi: erc20Abi, functionName: 'symbol' }),
           publicClient.readContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'tokenDecimals', args: [token] }),
           publicClient.readContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'allowedToken', args: [token] }),
-          publicClient.readContract({ address: token, abi: [{ type: 'function', name: 'balanceOf', stateMutability: 'view', inputs: [{ name: 'a', type: 'address' }], outputs: [{ name: '', type: 'uint256' }] }] as const, functionName: 'balanceOf', args: [CONTRACT_ADDRESS] }) as unknown as Promise<bigint>,
         ])
         if (!active) return
         setTokenSymbol(symbol)
         setTokenDecimals(Number(decimals))
         setTokenAllowed(allowed)
-        setContractTokenBalance(balance as unknown as bigint)
       } catch {
         if (active) {
           setTokenSymbol('TOKEN')
           setTokenAllowed(false)
-          setContractTokenBalance(null)
         }
       }
     }
     void loadToken()
     return () => { active = false }
   }, [tokenAddress, refreshVersion])
+
+  useEffect(() => {
+    const USDT_ADDR = '0x55d398326f99059ff775485246999027b3197955' as Address
+    const GC_ADDR = '0x5C0D286F3812Da7f6bd766b7AAdadC7059938de8' as Address
+    const balAbi = [{ type: 'function', name: 'balanceOf', stateMutability: 'view', inputs: [{ name: 'a', type: 'address' }], outputs: [{ name: '', type: 'uint256' }] }] as const
+    let active = true
+    const load = async () => {
+      try {
+        const [usdt, gc] = await Promise.all([
+          publicClient.readContract({ address: USDT_ADDR, abi: balAbi, functionName: 'balanceOf', args: [CONTRACT_ADDRESS] }),
+          publicClient.readContract({ address: GC_ADDR, abi: balAbi, functionName: 'balanceOf', args: [CONTRACT_ADDRESS] }),
+        ])
+        if (!active) return
+        setContractUsdtBalance(usdt as unknown as bigint)
+        setContractGcBalance(gc as unknown as bigint)
+      } catch {
+        if (active) {
+          setContractUsdtBalance(null)
+          setContractGcBalance(null)
+        }
+      }
+    }
+    void load()
+    return () => { active = false }
+  }, [refreshVersion])
 
   useEffect(() => {
     const provider = window.ethereum
@@ -376,7 +399,7 @@ function App() {
           <span className="contract-label">CONTRACT</span>
           <code>{CONTRACT_ADDRESS}</code>
           <a href={`https://bscscan.com/address/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer" aria-label="Open contract on BscScan"><ExternalLink size={15} /></a>
-          <span className="contract-balance"><span className="contract-label">BALANCE</span> {prettyAmount(contractTokenBalance ?? undefined, tokenDecimals)} {tokenSymbol}</span>
+          <span className="contract-balance"><span className="contract-label">BALANCE</span> USDT {prettyAmount(contractUsdtBalance ?? undefined, 18)} · GC {prettyAmount(contractGcBalance ?? undefined, 6)}</span>
           <span className={`status-chip ${terms?.paused ? 'is-paused' : 'is-live'}`}><span />{terms?.paused ? 'Paused' : 'Contract active'}</span>
         </section>
 
