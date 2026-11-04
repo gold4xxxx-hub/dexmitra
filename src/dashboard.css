@@ -108,6 +108,10 @@ td small { color: #8c968e; font: 9px var(--mono); }
 .action-tabs button.action-utility { margin-left: 3px; border-left: 1px solid var(--line); }
 .action-form { display: flex; flex-direction: column; gap: 8px; padding: 17px 0 18px; }
 .field-label { margin-top: 4px; color: #59665c; font-size: 10px; font-weight: 700; }
+.referrer-mode { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 2px 0 6px; }
+.referrer-mode-button { min-height: 34px; border: 1px solid #dfe5dc; border-radius: 5px; background: #fff; color: #59665c; font-size: 10px; font-weight: 600; transition: background .15s, border-color .15s, color .15s; }
+.referrer-mode-button:hover { border-color: #9db59f; }
+.referrer-mode-button.selected { border-color: var(--green); background: var(--green); color: #fff; }
 .action-form input, .action-form select { width: 100%; min-width: 0; height: 39px; padding: 0 10px; border: 1px solid #dfe5dc; border-radius: 5px; outline: 0; background: #fff; color: #334137; font-size: 11px; }
 .action-form input:focus, .action-form select:focus { border-color: #81a889; box-shadow: 0 0 0 3px rgba(67, 132, 82, .1); }
 .action-form input::placeholder { color: #a0a9a1; }

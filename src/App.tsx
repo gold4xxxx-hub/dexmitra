@@ -92,6 +92,7 @@ type ContractTerms = {
 }
 
 type Action = 'register' | 'invest' | 'withdraw' | 'reinvest' | 'upgrade'
+const ZERO_REFERRER = '0x0000000000000000000000000000000000000000' as Address
 
 const publicClient = createPublicClient({ chain: bsc, transport: http() })
 
@@ -131,6 +132,7 @@ function App() {
   const [action, setAction] = useState<Action>('register')
   const [amount, setAmount] = useState('')
   const [referrer, setReferrer] = useState('')
+  const [referrerMode, setReferrerMode] = useState<'manual' | 'root'>('manual')
   const [plan, setPlan] = useState('0')
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
@@ -468,8 +470,12 @@ function App() {
 
               {action === 'register' && <>
                 <label className="field-label" htmlFor="referrer">Referrer address</label>
-                <input id="referrer" value={referrer} onChange={(event) => setReferrer(event.target.value.trim())} placeholder="0x..." spellCheck={false} autoComplete="off" />
-                <p className="form-hint">Use 0x0000…0000 for the first/root registration, or an already-registered account.</p>
+                <div className="referrer-mode">
+                  <button type="button" className={`referrer-mode-button ${referrerMode === 'manual' ? 'selected' : ''}`} onClick={() => { setReferrerMode('manual'); if (referrer === ZERO_REFERRER) setReferrer('') }}>Enter referrer</button>
+                  <button type="button" className={`referrer-mode-button ${referrerMode === 'root' ? 'selected' : ''}`} onClick={() => { setReferrerMode('root'); setReferrer(ZERO_REFERRER) }}>No referrer (first registration)</button>
+                </div>
+                <input id="referrer" value={referrer} onChange={(event) => setReferrer(event.target.value.trim())} placeholder="0x..." spellCheck={false} autoComplete="off" disabled={referrerMode === 'root'} />
+                <p className="form-hint">{referrerMode === 'root' ? 'Root registration: referrer will be set to 0x0000…0000 automatically.' : 'Must be an already-registered account address.'}</p>
                 <label className="field-label" htmlFor="registration-plan">Plan</label>
                 <select id="registration-plan" value={plan} onChange={(event) => setPlan(event.target.value)}>{(terms?.plans ?? [0, 1, 2]).map((planId, index) => <option value={planId} key={planId}>Plan {planNames[index]}</option>)}</select>
                 <div className="read-only-value"><span>Registration fee</span><strong>{prettyAmount(terms ? terms.registrationFee / tokenScale : undefined, tokenDecimals)} {tokenSymbol}</strong></div>
