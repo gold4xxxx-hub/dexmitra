@@ -286,12 +286,14 @@ function App() {
 
       if (action === 'register') {
         if (!token || !isAddress(referrer)) throw new Error('Enter a valid payment token and referrer address.')
-        await approveToken(terms.registrationFee)
+        await approveToken(terms.registrationFee / tokenScale)
         hash = await client.writeContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'register', args: [getAddress(referrer), Number(plan), token] })
       } else if (action === 'invest') {
         if (!token || !amount) throw new Error('Enter an amount and a valid payment token.')
         const value = parseUnits(amount, tokenDecimals)
-        if (value < terms.minInvest || value > terms.maxInvest) throw new Error(`Amount must be between ${prettyAmount(terms.minInvest, tokenDecimals)} and ${prettyAmount(terms.maxInvest, tokenDecimals)} ${tokenSymbol}.`)
+        const minInvest = terms.minInvest / tokenScale
+        const maxInvest = terms.maxInvest / tokenScale
+        if (value < minInvest || value > maxInvest) throw new Error(`Amount must be between ${prettyAmount(minInvest, tokenDecimals)} and ${prettyAmount(maxInvest, tokenDecimals)} ${tokenSymbol}.`)
         await approveToken(value)
         hash = await client.writeContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'invest', args: [value, token] })
       } else if (action === 'withdraw') {
@@ -319,6 +321,7 @@ function App() {
 
   const planNames = ['2x', '3x', '2.5x']
   const unitDecimals = terms?.unit.toString().length ? terms.unit.toString().length - 1 : 18
+  const tokenScale = 10n ** BigInt(Math.max(0, 18 - tokenDecimals))
   const selectedTab = (next: Action) => {
     setAction(next)
     setNotice('')
@@ -463,7 +466,7 @@ function App() {
                 <input id="referrer" value={referrer} onChange={(event) => setReferrer(event.target.value.trim())} placeholder="0x..." spellCheck={false} autoComplete="off" />
                 <label className="field-label" htmlFor="registration-plan">Plan</label>
                 <select id="registration-plan" value={plan} onChange={(event) => setPlan(event.target.value)}>{(terms?.plans ?? [0, 1, 2]).map((planId, index) => <option value={planId} key={planId}>Plan {planNames[index]}</option>)}</select>
-                <div className="read-only-value"><span>Registration fee</span><strong>{prettyAmount(terms?.registrationFee, tokenDecimals)} {tokenSymbol}</strong></div>
+                <div className="read-only-value"><span>Registration fee</span><strong>{prettyAmount(terms ? terms.registrationFee / tokenScale : undefined, tokenDecimals)} {tokenSymbol}</strong></div>
               </>}
 
               {action === 'upgrade' && <>
@@ -475,7 +478,7 @@ function App() {
               {['invest', 'withdraw', 'reinvest'].includes(action) && <>
                 <label className="field-label" htmlFor="amount">Amount</label>
                 <div className="amount-wrap"><input id="amount" type="number" min="0" step="any" inputMode="decimal" value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="0.00" required /><span>{action === 'reinvest' ? 'units' : tokenSymbol}</span></div>
-                {action === 'invest' && terms && <p className="form-hint">Range: {prettyAmount(terms.minInvest, tokenDecimals)} to {prettyAmount(terms.maxInvest, tokenDecimals)} {tokenSymbol}</p>}
+                {action === 'invest' && terms && <p className="form-hint">Range: {prettyAmount(terms.minInvest / tokenScale, tokenDecimals)} to {prettyAmount(terms.maxInvest / tokenScale, tokenDecimals)} {tokenSymbol}</p>}
                 {action === 'withdraw' && <p className="form-hint">Available: {prettyAmount(summary?.withdrawable, unitDecimals)} contract units</p>}
                 {action === 'reinvest' && <p className="form-hint">Reinvest amount uses the contract's {unitDecimals}-decimal internal unit.</p>}
               </>}
