@@ -117,6 +117,44 @@ function readableError(error: unknown) {
   return 'The request could not be completed.'
 }
 
+/* Animated counter: counts from 0 to target over ~1.2s with ease-out */
+function formatJoinedAt(ts: bigint) {
+  return new Date(Number(ts) * 1000).toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+function formatCounter(value: number, decimals: number) {
+  const [integer, fraction = ''] = value.toFixed(Math.min(decimals, 4)).split('.')
+  const grouped = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  const trimmedFraction = fraction.replace(/0+$/, '')
+  return trimmedFraction ? `${grouped}.${trimmedFraction}` : grouped
+}
+
+type CounterProps = { target: bigint | null; decimals: number }
+function Counter({ target, decimals }: CounterProps) {
+  const [displayValue, setDisplayValue] = useState(0)
+  useEffect(() => {
+    const start = 0
+    const end = target ? Number(target) / Number(10n ** BigInt(decimals)) : 0
+    const startTime = performance.now()
+    const duration = 1200
+    let rafId: number
+    const loop = (time: number) => {
+      const elapsed = time - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      const ease = 1 - Math.pow(1 - progress, 3)
+      setDisplayValue(start + (end - start) * ease)
+      if (progress < 1) rafId = requestAnimationFrame(loop)
+    }
+    rafId = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(rafId)
+  }, [target, decimals])
+  return <span className="tabular-nums">{formatCounter(displayValue, decimals)}</span>
+}
+
 function App() {
   const [account, setAccount] = useState<Address | null>(null)
   const [summary, setSummary] = useState<UserSummary | null>(null)
@@ -353,7 +391,17 @@ function App() {
     }
   }
 
-  const planNames = ['2x', '3x', '2.5x']
+  const planNames: Record<number, string> = { 0: '2x', 2: '3x', 1: '2.5x' }
+  const eligiblePlans = terms ? terms.plans.filter((id) => id === 0 || id === 1) : [0, 1]
+  const plan3xId = terms?.plans.find((id) => id === 2) ?? 2
+  const upgradeDirectsNeeded = terms ? Number(terms.minDirects[plan3xId] ?? 10n) : 10
+  const userPlan = summary?.plan
+  const is2x = userPlan === 0
+  const is25x = userPlan === 1
+  const is3x = userPlan === 2
+  const directs = Number(summary?.directCount ?? 0n)
+  const upgradeReady = is25x && directs >= upgradeDirectsNeeded
+  const planRows = [...eligiblePlans]
   const unitDecimals = terms?.unit.toString().length ? terms.unit.toString().length - 1 : 18
   const tokenScale = 10n ** BigInt(Math.max(0, 18 - tokenDecimals))
   const selectedTab = (next: Action) => {
@@ -361,24 +409,31 @@ function App() {
     setNotice('')
     setError('')
   }
+  const submitDisabled =
+    busy ||
+    !account ||
+    loading ||
+    Boolean(terms?.paused) ||
+    (action === 'register' && Boolean(summary?.registered)) ||
+    (action === 'upgrade' && !upgradeReady)
 
   return (
     <div className="app-shell">
       <header className="topbar">
         <a className="brand" href="#top" aria-label="Dexmitra dashboard">
-          <span className="brand-mark"><Landmark size={18} strokeWidth={2.2} /></span>
+          <span className="brand-mark"><Landmark size={16} strokeWidth={2} /></span>
           <span>dexmitra<span className="brand-period">.</span></span>
         </a>
         <div className="topbar-right">
           <a className="network-pill" href="https://bscscan.com" target="_blank" rel="noreferrer">
-            <span className="network-dot" /> BNB Chain <ExternalLink size={13} />
+            <span className="network-dot" /> BNB Chain <ExternalLink size={12} />
           </a>
           {account ? (
             <button className="wallet-button connected" type="button" onClick={() => setAccount(null)} title="Disconnect wallet">
-              <span className="wallet-dot" />{shortAddress(account)}<ChevronDown size={14} />
+              <span className="wallet-dot" />{shortAddress(account)}<ChevronDown size={12} />
             </button>
           ) : (
-            <button className="wallet-button" type="button" onClick={() => void connectWallet()}><Wallet size={16} /> Connect wallet</button>
+            <button className="wallet-button" type="button" onClick={() => void connectWallet()}><Wallet size={14} /> Connect wallet</button>
           )}
         </div>
       </header>
@@ -391,40 +446,47 @@ function App() {
             <p className="subheading">A direct view of your account and the contract state.</p>
           </div>
           <button className="icon-button refresh-button" type="button" onClick={() => setRefreshVersion((version) => version + 1)} aria-label="Refresh contract data" title="Refresh">
-            <RefreshCw size={17} />
+            <RefreshCw size={15} />
           </button>
         </div>
 
         <section className="contract-strip" aria-label="Contract address">
-          <span className="contract-label">CONTRACT</span>
+          <span className="contract-label">Contract</span>
           <code>{CONTRACT_ADDRESS}</code>
-          <a href={`https://bscscan.com/address/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer" aria-label="Open contract on BscScan"><ExternalLink size={15} /></a>
-          <span className="contract-balance"><span className="contract-label">BALANCE</span> USDT {prettyAmount(contractUsdtBalance ?? undefined, 18)} · GC {prettyAmount(contractGcBalance ?? undefined, 6)}</span>
+          <a href={`https://bscscan.com/address/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer" aria-label="Open contract on BscScan"><ExternalLink size={13} /></a>
+          <span className="contract-balance"><span className="contract-label">Balance</span> USDT {prettyAmount(contractUsdtBalance ?? undefined, 18)} · GC {prettyAmount(contractGcBalance ?? undefined, 6)}</span>
           <span className={`status-chip ${terms?.paused ? 'is-paused' : 'is-live'}`}><span />{terms?.paused ? 'Paused' : 'Contract active'}</span>
         </section>
 
-        {error && <div className="feedback error-feedback" role="alert"><BadgeAlert size={17} /><span>{error}</span><button type="button" onClick={() => setError('')} aria-label="Dismiss"><span aria-hidden="true">×</span></button></div>}
-        {notice && <div className="feedback success-feedback" role="status"><Check size={17} /><span>{notice} {txHash && <a href={`https://bscscan.com/tx/${txHash}`} target="_blank" rel="noreferrer">View transaction <ExternalLink size={12} /></a>}</span></div>}
+        {account && summary && (
+          <div className="member-since">
+            <span className="member-since-label">Member since</span>
+            <span className="member-since-value">{formatJoinedAt(summary.joinedAt)}</span>
+          </div>
+        )}
+
+        {error && <div className="feedback error-feedback" role="alert"><BadgeAlert size={16} /><span>{error}</span><button type="button" onClick={() => setError('')} aria-label="Dismiss"><span aria-hidden="true">×</span></button></div>}
+        {notice && <div className="feedback success-feedback" role="status"><Check size={16} /><span>{notice} {txHash && <a href={`https://bscscan.com/tx/${txHash}`} target="_blank" rel="noreferrer">View transaction <ExternalLink size={12} /></a>}</span></div>}
 
         <section className="metrics" aria-label="Account summary">
           <article className="metric metric-primary">
-            <div className="metric-label">TOTAL INVESTED <span title="Value reported by the contract."><CircleHelp size={13} aria-label="Value reported by the contract" /></span></div>
-            <div className="metric-value">{loading ? '...' : prettyAmount(summary?.totalInvested, unitDecimals)} <small>units</small></div>
+            <div className="metric-label">TOTAL INVESTED <span title="Value reported by the contract."><CircleHelp size={12} aria-label="Value reported by the contract" /></span></div>
+            <div className="metric-value">{loading ? '—' : <Counter target={summary?.totalInvested ?? 0n} decimals={unitDecimals} />}<small>units</small></div>
             <div className="metric-foot">Lifetime deposits</div>
           </article>
           <article className="metric">
             <div className="metric-label">ACTIVE PRINCIPAL</div>
-            <div className="metric-value">{loading ? '...' : prettyAmount(summary?.activeInvested, unitDecimals)} <small>units</small></div>
+            <div className="metric-value">{loading ? '—' : <Counter target={summary?.activeInvested ?? 0n} decimals={unitDecimals} />}<small>units</small></div>
             <div className="metric-foot">Currently active</div>
           </article>
-          <article className="metric">
+          <article className="metric metric-earn">
             <div className="metric-label">WITHDRAWABLE</div>
-            <div className="metric-value">{loading ? '...' : prettyAmount(summary?.withdrawable, unitDecimals)} <small>units</small></div>
+            <div className="metric-value">{loading ? '—' : <Counter target={summary?.withdrawable ?? 0n} decimals={unitDecimals} />}<small>units</small></div>
             <div className="metric-foot">Contract-reported balance</div>
           </article>
-          <article className="metric">
+          <article className="metric metric-earn">
             <div className="metric-label">PENDING ROI</div>
-            <div className="metric-value">{loading ? '...' : prettyAmount(summary?.pendingRoi, unitDecimals)} <small>units</small></div>
+            <div className="metric-value">{loading ? '—' : <Counter target={summary?.pendingRoi ?? 0n} decimals={unitDecimals} />}<small>units</small></div>
             <div className="metric-foot">Not a guaranteed return</div>
           </article>
         </section>
@@ -433,110 +495,200 @@ function App() {
           <div className="left-column">
             <section className="data-section positions-section">
               <div className="section-heading">
-                <div><p className="eyebrow">PORTFOLIO</p><h2>Investment positions</h2></div>
+                <div>
+                  <p className="eyebrow">PORTFOLIO</p>
+                  <h2>Investment positions</h2>
+                </div>
                 <span className="count-pill">{investments.filter((item) => item.active).length} active</span>
               </div>
               {!account ? (
-                <div className="empty-state"><Wallet size={20} /><strong>Connect a wallet to view positions</strong><span>Your account data is read directly from the contract.</span></div>
+                <div className="empty-state"><Wallet size={18} /><strong>Connect a wallet to view positions</strong><span>Your account data is read directly from the contract.</span></div>
               ) : loading ? (
-                <div className="empty-state"><LoaderCircle className="spin" size={20} /><span>Loading on-chain positions...</span></div>
+                <div className="empty-state"><LoaderCircle className="spin" size={18} /><span>Loading on-chain positions…</span></div>
               ) : investments.length === 0 ? (
-                <div className="empty-state"><ArrowDownLeft size={20} /><strong>No positions found</strong><span>This wallet has no investment records in the contract.</span></div>
+                <div className="empty-state"><ArrowDownLeft size={18} /><strong>No positions found</strong><span>This wallet has no investment records in the contract.</span></div>
               ) : (
-                <div className="table-wrap">
-                  <table>
-                    <thead><tr><th>Position</th><th>Principal</th><th>Earned</th><th>Cap</th><th>Status</th></tr></thead>
-                    <tbody>{investments.map((item, index) => (
-                      <tr key={`${item.startedAt}-${index}`}>
-                        <td data-label="Position"><span className="position-name">#{investments.length - index}</span><span className="position-date">{new Date(Number(item.startedAt) * 1000).toLocaleDateString()}</span></td>
-                        <td data-label="Principal">{prettyAmount(item.amount, unitDecimals)} <small>units</small></td>
-                        <td data-label="Earned">{prettyAmount(item.earned + item.otherEarned, unitDecimals)} <small>units</small></td>
-                        <td data-label="Cap">{prettyAmount(item.cap, unitDecimals)} <small>units</small></td>
-                        <td data-label="Status"><span className={`row-status ${item.active ? 'active' : ''}`}><span />{item.active ? 'Active' : 'Closed'}</span></td>
-                      </tr>
-                    ))}</tbody>
-                  </table>
+                <div className="positions-grid">
+                  {investments.map((item, index) => {
+                    const earnedTotal = item.earned + item.otherEarned
+                    const capPct = item.cap > 0n ? Math.min(100, Math.round((Number(earnedTotal) / Number(item.cap)) * 100)) : 0
+                    return (
+                      <div key={`${item.startedAt}-${index}`} className="position-card">
+                        <div className="position-header">
+                          <div className="position-id-row">
+                            <span className="position-badge">#{investments.length - index}</span>
+                            <span className="position-date">{new Date(Number(item.startedAt) * 1000).toLocaleDateString()}</span>
+                          </div>
+                          <span className={`status-pill ${item.active ? 'is-active' : 'is-closed'}`}>{item.active ? 'Active' : 'Closed'}</span>
+                        </div>
+                        <div className="position-stats">
+                          <div className="stat-col">
+                            <span className="stat-label">PRINCIPAL</span>
+                            <span className="stat-value">{prettyAmount(item.amount, unitDecimals)} units</span>
+                          </div>
+                          <div className="stat-col">
+                            <span className="stat-label">EARNED</span>
+                            <span className="stat-value stat-value-earned">{prettyAmount(earnedTotal, unitDecimals)} units</span>
+                          </div>
+                          <div className="stat-col">
+                            <span className="stat-label">MAX CAP</span>
+                            <span className="stat-value">{prettyAmount(item.cap, unitDecimals)} units</span>
+                          </div>
+                        </div>
+                        <div className="progress-row">
+                          <div className="progress-label-row">
+                            <span className="progress-label">ROI Cap Progress</span>
+                            <span className="progress-value">{capPct}% ({prettyAmount(earnedTotal, unitDecimals)} / {prettyAmount(item.cap, unitDecimals)} units)</span>
+                          </div>
+                          <div className="progress-track">
+                            <div className="progress-fill" style={{ width: capPct + '%' }} />
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </section>
 
             <section className="data-section terms-section">
               <div className="section-heading">
-                <div><p className="eyebrow">READ FROM CONTRACT</p><h2>Plan parameters</h2></div>
+                <div>
+                  <p className="eyebrow">READ FROM CONTRACT</p>
+                  <h2>Plan parameters</h2>
+                </div>
                 <span className="live-read"><span /> Live</span>
               </div>
-              <div className="terms-table">
-                <div className="terms-row terms-head"><span>Plan</span><span>Multiplier</span><span>Monthly rate</span><span>Directs required</span></div>
-                {terms?.plans.map((planId, index) => (
-                  <div className="terms-row" key={planId}>
-                    <span className="term-plan"><span className={`plan-number plan-${index}`}>0{index + 1}</span>Plan {planNames[index]}</span>
-                    <span>{(Number(terms.multiplierBps[planId]) / 10000).toFixed(2)}x</span>
-                    <span>{(Number(terms.roiBps[planId]) / 100).toFixed(2)}%</span>
-                    <span>{String(terms.minDirects[planId])}</span>
+              <div className="tiers-grid">
+                {planRows.map((planId) => (
+                  <div key={planId} className={`tier-card ${is3x && planId === 2 ? 'is-current' : ''}`}>
+                    <div className="tier-header">
+                      <span className="plan-name-badge">PLAN {planNames[planId]}</span>
+                      <span className="directs-pill">Directs required: {terms ? String(terms.minDirects[planId]) : '—'}</span>
+                    </div>
+                    <div className="tier-metrics">
+                      <div className="tier-metric">
+                        <span className="tier-metric-label">MULTIPLIER</span>
+                        <span className="tier-metric-value">{terms ? (Number(terms.multiplierBps[planId]) / 10000).toFixed(2) + 'x' : '—'}</span>
+                      </div>
+                      <div className="tier-metric">
+                        <span className="tier-metric-label">MONTHLY RATE</span>
+                        <span className="tier-metric-value tier-metric-value-earn">{terms ? (Number(terms.roiBps[planId]) / 100).toFixed(2) + '%' : '—'}</span>
+                      </div>
+                    </div>
                   </div>
                 ))}
-                {!terms && <div className="terms-unavailable">Plan data unavailable.</div>}
+                {!terms && <div className="tier-unavailable">Plan data unavailable.</div>}
               </div>
-              <p className="terms-note"><CircleHelp size={14} /> Rates and caps are contract parameters, not promises of payment.</p>
+              <div className="upgrade-note">
+                <CircleHelp size={13} />
+                <span>
+                  {is3x
+                    ? '3x was an auto-upgrade (2.5x → 3x reached). Your current plan is 3x.'
+                    : is2x
+                      ? '2x is final — it cannot be upgraded. 2.5x auto-upgrades to 3x.'
+                      : is25x
+                        ? `2.5x → 3x auto-upgrade at ${upgradeDirectsNeeded} directs. You have ${directs}.`
+                        : `2.5x → 3x auto-upgrade at ${upgradeDirectsNeeded} directs. 2x is final.`}
+                </span>
+              </div>
+              <p className="terms-note"><CircleHelp size={13} /> Rates and caps are contract parameters, not promises of payment.</p>
             </section>
           </div>
 
           <aside className="action-panel">
-            <div className="action-heading"><div><p className="eyebrow">CONTRACT ACTIONS</p><h2>Manage account</h2></div><span className="action-chain">BSC</span></div>
-            <div className="action-tabs" role="tablist" aria-label="Contract action">
-              {(['register', 'invest', 'withdraw', 'reinvest', 'upgrade'] as Action[]).map((tab, index) => (
-                <button className={`action-tab action-tab-${tab} ${action === tab ? 'selected' : ''} ${tab === 'upgrade' ? 'action-utility' : ''}`} type="button" role="tab" aria-selected={action === tab} key={tab} onClick={() => selectedTab(tab)}>
-                  {tab !== 'upgrade' && <span className="action-step">0{index + 1}</span>}
-                  <span>{tab === 'upgrade' ? 'Plan' : tab}</span>
-                </button>
-              ))}
-            </div>
-            <form className="action-form" onSubmit={(event) => void submitAction(event)}>
-              {!['upgrade', 'reinvest'].includes(action) && <label className="field-label" htmlFor="token-address">Payment token</label>}
-              {!['upgrade', 'reinvest'].includes(action) && <select id="token-address" value={tokenAddress} onChange={(event) => setTokenAddress(event.target.value)}>{PAYMENT_TOKENS.map((token) => <option value={token.address} key={token.address}>{token.symbol} · {token.name}</option>)}</select>}
-              {!['upgrade', 'reinvest'].includes(action) && <div className={`token-validation ${tokenAllowed === true ? 'valid' : tokenAllowed === false ? 'invalid' : ''}`}>{tokenAllowed === true ? `${tokenSymbol} · ${tokenDecimals} decimals · allowed by contract` : tokenAllowed === false ? 'Token is not allowed by the contract' : 'Checking token with the contract...'}</div>}
-
-              {action === 'register' && <>
-                <label className="field-label" htmlFor="referrer">Referrer address</label>
-                <div className="referrer-mode">
-                  <button type="button" className={`referrer-mode-button ${referrerMode === 'manual' ? 'selected' : ''}`} onClick={() => { setReferrerMode('manual'); if (referrer === ZERO_REFERRER) setReferrer('') }}>Enter referrer</button>
-                  <button type="button" className={`referrer-mode-button ${referrerMode === 'root' ? 'selected' : ''}`} onClick={() => { setReferrerMode('root'); setReferrer(ZERO_REFERRER) }}>No referrer (first registration)</button>
+            <div className="section-content">
+              <div className="action-heading">
+                <div>
+                  <p className="eyebrow">CONTRACT ACTIONS</p>
+                  <h2>Manage account</h2>
                 </div>
-                <input id="referrer" value={referrer} onChange={(event) => setReferrer(event.target.value.trim())} placeholder="0x..." spellCheck={false} autoComplete="off" disabled={referrerMode === 'root'} />
-                <p className="form-hint">{referrerMode === 'root' ? 'Root registration: referrer will be set to 0x0000…0000 automatically.' : 'Must be an already-registered account address.'}</p>
-                <label className="field-label" htmlFor="registration-plan">Plan</label>
-                <select id="registration-plan" value={plan} onChange={(event) => setPlan(event.target.value)}>{(terms?.plans ?? [0, 1, 2]).map((planId, index) => <option value={planId} key={planId}>Plan {planNames[index]}</option>)}</select>
-                <div className="read-only-value"><span>Registration fee</span><strong>{prettyAmount(terms ? terms.registrationFee / tokenScale : undefined, tokenDecimals)} {tokenSymbol}</strong></div>
-              </>}
+                <span className="action-chain">BSC</span>
+              </div>
+              <div className="action-tabs" role="tablist" aria-label="Contract action">
+                {(['register', 'invest', 'withdraw', 'reinvest', 'upgrade'] as Action[]).map((tab) => (
+                  <button
+                    className={`action-tab ${action === tab ? 'selected' : ''} ${tab === 'upgrade' ? 'action-utility' : ''}`}
+                    type="button"
+                    role="tab"
+                    aria-selected={action === tab}
+                    key={tab}
+                    onClick={() => selectedTab(tab)}
+                  >
+                    <span>{tab === 'upgrade' ? 'Plan' : tab}</span>
+                  </button>
+                ))}
+              </div>
+              <form className="action-form" onSubmit={(event) => void submitAction(event)}>
+                {!['upgrade', 'reinvest'].includes(action) && <label className="field-label" htmlFor="token-address">Payment token</label>}
+                {!['upgrade', 'reinvest'].includes(action) && <select id="token-address" value={tokenAddress} onChange={(event) => setTokenAddress(event.target.value)}>{PAYMENT_TOKENS.map((token) => <option value={token.address} key={token.address}>{token.symbol} · {token.name}</option>)}</select>}
+                {!['upgrade', 'reinvest'].includes(action) && <div className={`token-validation ${tokenAllowed === true ? 'valid' : tokenAllowed === false ? 'invalid' : ''}`}>{tokenAllowed === true ? `${tokenSymbol} · ${tokenDecimals} decimals · allowed by contract` : tokenAllowed === false ? 'Token is not allowed by the contract' : 'Checking token with the contract…'}</div>}
 
-              {action === 'upgrade' && <>
-                <label className="field-label" htmlFor="upgrade-plan">New plan</label>
-                <select id="upgrade-plan" value={plan} onChange={(event) => setPlan(event.target.value)}>{(terms?.plans ?? [0, 1, 2]).map((planId, index) => <option value={planId} key={planId}>Plan {planNames[index]}</option>)}</select>
-                <p className="form-hint">Plan upgrades are irreversible if enforced by the contract. Confirm the selected plan in your wallet.</p>
-              </>}
+                {action === 'register' && (
+                  <>
+                    <label className="field-label" htmlFor="referrer">Referrer address</label>
+                    <div className="referrer-segment">
+                      <button type="button" className={`referrer-btn ${referrerMode === 'manual' ? 'selected' : ''}`} onClick={() => { setReferrerMode('manual'); if (referrer === ZERO_REFERRER) setReferrer('') }}>Enter referrer</button>
+                      <button type="button" className={`referrer-btn ${referrerMode === 'root' ? 'selected' : ''}`} onClick={() => { setReferrerMode('root'); setReferrer(ZERO_REFERRER) }}>No referrer</button>
+                    </div>
+                    <input id="referrer" value={referrer} onChange={(event) => setReferrer(event.target.value.trim())} placeholder="0x…" spellCheck={false} autoComplete="off" disabled={referrerMode === 'root'} />
+                    <p className="form-hint">{referrerMode === 'root' ? 'Root registration: referrer will be set to 0x0000…0000 automatically.' : 'Must be an already-registered account address.'}</p>
+                    <label className="field-label" htmlFor="registration-plan">Plan</label>
+                    <select id="registration-plan" value={plan} onChange={(event) => setPlan(event.target.value)}>{eligiblePlans.map((planId) => <option value={planId} key={planId}>Plan {planNames[planId]}</option>)}</select>
+                  </>
+                )}
 
-              {['invest', 'withdraw', 'reinvest'].includes(action) && <>
-                <label className="field-label" htmlFor="amount">Amount</label>
-                <div className="amount-wrap"><input id="amount" type="number" min="0" step="any" inputMode="decimal" value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="0.00" required /><span>{action === 'reinvest' ? 'units' : tokenSymbol}</span></div>
-                {action === 'invest' && terms && <p className="form-hint">Range: {prettyAmount(terms.minInvest / tokenScale, tokenDecimals)} to {prettyAmount(terms.maxInvest / tokenScale, tokenDecimals)} {tokenSymbol}</p>}
-                {action === 'withdraw' && <p className="form-hint">Available: {prettyAmount(summary?.withdrawable, unitDecimals)} contract units</p>}
-                {action === 'reinvest' && <p className="form-hint">Reinvest amount uses the contract's {unitDecimals}-decimal internal unit.</p>}
-              </>}
+                {action === 'upgrade' && (
+                  <>
+                    <label className="field-label" htmlFor="upgrade-plan">Plan</label>
+                    <select id="upgrade-plan" value={plan3xId} disabled>
+                      <option value={plan3xId}>Plan 3x (auto-upgrade only)</option>
+                    </select>
+                    <p className="form-hint">
+                      {is3x
+                        ? 'You are already on 3x (reached by auto-upgrade). No manual upgrade is needed.'
+                        : is2x
+                          ? '2x is final and can never be upgraded.'
+                          : is25x
+                            ? upgradeReady
+                              ? `You have ${directs} directs (need ${upgradeDirectsNeeded}). You can confirm the 2.5x → 3x upgrade.`
+                              : `You need ${upgradeDirectsNeeded} directs for 3x. You have ${directs}.`
+                            : `Only 2.5x users can upgrade to 3x, and only with ${upgradeDirectsNeeded} directs.`}
+                    </p>
+                  </>
+                )}
 
-              <div className="form-summary"><span>{action === 'invest' ? 'Method' : action === 'register' ? 'Method' : action === 'upgrade' ? 'Method' : 'Contract method'}</span><strong>{action === 'upgrade' ? 'upgradePlan' : action}</strong></div>
-              <button className={`submit-button action-button-${action}`} type="submit" disabled={busy || !account || loading || Boolean(terms?.paused) || (action === 'register' && Boolean(summary?.registered))}>
-                {busy ? <><LoaderCircle className="spin" size={16} /> Processing</> : <>{action === 'withdraw' ? <ArrowUpRight size={16} /> : <ArrowDownLeft size={16} />}{action === 'upgrade' ? 'Confirm plan change' : action === 'register' ? 'Register account' : `${action[0].toUpperCase()}${action.slice(1)}`}</>}
-              </button>
-              {!account && <p className="connect-hint">Connect a wallet to enable transactions.</p>}
-              {terms?.paused && <p className="connect-hint">Contract is paused. New transactions are disabled.</p>}
-            </form>
-            <div className="action-disclaimer"><ShieldAlert size={15} /><span>Transactions are irreversible. Verify the token, amount, and contract address before approving.</span></div>
+                {['invest', 'withdraw', 'reinvest'].includes(action) && (
+                  <>
+                    <label className="field-label" htmlFor="amount">Amount</label>
+                    <div className="amount-wrap"><input id="amount" type="number" min="0" step="any" inputMode="decimal" value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="0.00" required /><span>{action === 'reinvest' ? 'units' : tokenSymbol}</span></div>
+                    {action === 'invest' && terms && <p className="form-hint">Range: {prettyAmount(terms.minInvest / tokenScale, tokenDecimals)} to {prettyAmount(terms.maxInvest / tokenScale, tokenDecimals)} {tokenSymbol}</p>}
+                    {action === 'withdraw' && <p className="form-hint">Available: {prettyAmount(summary?.withdrawable, unitDecimals)} contract units</p>}
+                    {action === 'reinvest' && <p className="form-hint">Reinvest amount uses the contract's {unitDecimals}-decimal internal unit.</p>}
+                  </>
+                )}
+
+                <div className="receipt-box">
+                  <div className="receipt-row"><span className="label">Contract method</span><span className="value">{action === 'upgrade' ? 'upgradePlan' : action}</span></div>
+                  {action === 'register' && (
+                    <div className="receipt-row"><span className="label">Registration fee</span><span className="value">{prettyAmount(terms ? terms.registrationFee / tokenScale : undefined, tokenDecimals)} {tokenSymbol}</span></div>
+                  )}
+                </div>
+
+                <button className={`submit-button action-button-${action}`} type="submit" disabled={submitDisabled}>
+                  {busy ? <><span className="loader"></span> Processing</> : <>{action === 'withdraw' ? <ArrowUpRight size={15} /> : <ArrowDownLeft size={15} />}{action === 'upgrade' ? 'Confirm plan change' : action === 'register' ? 'Register account' : `${action[0].toUpperCase()}${action.slice(1)}`}</>}
+                </button>
+                {!account && <p className="connect-hint">Connect a wallet to enable transactions.</p>}
+                {terms?.paused && <p className="connect-hint">Contract is paused. New transactions are disabled.</p>}
+              </form>
+              <div className="action-disclaimer"><ShieldAlert size={14} /><span>Transactions are irreversible. Verify the token, amount, and contract address before approving.</span></div>
+            </div>
           </aside>
         </div>
 
         <footer className="page-footer">
           <span><span className="footer-status" /> Reading from BNB Smart Chain</span>
-          <span>Contract values are provided as-is; verify them on <a href={`https://bscscan.com/address/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer">BscScan <ExternalLink size={12} /></a></span>
+          <span>Contract values are provided as-is; verify them on <a href={`https://bscscan.com/address/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer">BscScan <ExternalLink size={11} /></a></span>
         </footer>
       </main>
     </div>
