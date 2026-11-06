@@ -2241,6 +2241,69 @@
   .pull-to-refresh { display: none; }
 }
 
+/* --- Portfolio Health Score --- */
+.health-score-section { padding-bottom: 14px; }
+.health-gauge-wrap {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 14px;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: #121F19;
+}
+.health-gauge {
+  width: 180px;
+  height: 180px;
+  flex: 0 0 auto;
+}
+.health-gauge-score {
+  font: 800 1.6rem var(--mono);
+  dominant-baseline: middle;
+}
+.health-gauge-label {
+  fill: var(--muted);
+  font: 500 0.7rem var(--mono);
+  dominant-baseline: middle;
+}
+.health-gauge-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-width: 160px;
+}
+.health-gauge-factor {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--line);
+}
+.health-gauge-factor-label {
+  color: var(--secondary);
+  font: 500 0.72rem var(--display);
+  flex: 1 1 auto;
+}
+.health-gauge-factor-weight {
+  color: var(--muted);
+  font: 500 0.65rem var(--mono);
+  letter-spacing: 0.04em;
+}
+.health-gauge-factor-value {
+  color: var(--ink);
+  font: 700 0.85rem var(--mono);
+}
+@media (max-width: 640px) {
+  .health-gauge-wrap { flex-direction: column; }
+  .health-gauge-legend { width: 100%; }
+}
+
 /* --- Member Since --- */
 .member-since {
   display: inline-flex;

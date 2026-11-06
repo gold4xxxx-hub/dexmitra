@@ -992,6 +992,87 @@ function App() {
               <p className="terms-note"><CircleHelp size={13} /> Rates and caps are contract parameters, not promises of payment.</p>
             </section>
 
+            <section className="data-section health-score-section">
+              <div className="section-heading">
+                <div>
+                  <p className="eyebrow">PORTFOLIO HEALTH</p>
+                  <h2>Health score</h2>
+                </div>
+                <span className="live-read"><span /> Live</span>
+              </div>
+              {!account ? (
+                <div className="empty-state"><Wallet size={18} /><strong>Connect a wallet to view health score</strong><span>Your portfolio health will appear here.</span></div>
+              ) : loading ? (
+                <div className="empty-state"><LoaderCircle className="spin" size={18} /><span>Loading…</span></div>
+              ) : (
+                <>
+                  <div className="health-gauge-wrap">
+                    <svg viewBox="0 0 200 200" className="health-gauge">
+                      {(() => {
+                        const activeCount = investments.filter((i) => i.active).length
+                        const totalCount = investments.length
+                        const activeRatio = totalCount > 0 ? (activeCount / totalCount) * 100 : 0
+                        const cap = Number(summary?.incomeCap ?? 0n)
+                        const earned = Number(summary?.capEarned ?? 0n)
+                        const capUtilization = cap > 0 ? Math.min(100, (earned / cap) * 100) : 0
+                        const capHeadroom = 100 - capUtilization
+                        const invested = Number(summary?.totalInvested ?? 0n)
+                        const withdrawable = Number(summary?.withdrawable ?? 0n)
+                        const withdrawableRatio = invested > 0 ? Math.min(100, (withdrawable / invested) * 100) : 0
+                        const score = Math.round(activeRatio * 0.4 + capHeadroom * 0.3 + withdrawableRatio * 0.3)
+                        const color = score >= 70 ? '#10b981' : score >= 40 ? '#f59e0b' : '#ef4444'
+                        const r = 70
+                        const circumference = 2 * Math.PI * r
+                        const dash = (score / 100) * circumference
+                        const gap = circumference - dash
+                        return (
+                          <>
+                            <circle cx="100" cy="100" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="18" />
+                            <circle
+                              cx="100" cy="100" r={r}
+                              fill="none"
+                              stroke={color}
+                              strokeWidth="18"
+                              strokeDasharray={`${dash} ${gap}`}
+                              transform="rotate(-90 100 100)"
+                              strokeLinecap="round"
+                              style={{ filter: `drop-shadow(0 0 8px ${color}40)` }}
+                            />
+                            <text x="100" y="90" textAnchor="middle" className="health-gauge-score" style={{ fill: color }}>{score}</text>
+                            <text x="100" y="110" textAnchor="middle" className="health-gauge-label">Health Score</text>
+                          </>
+                        )
+                      })()}
+                    </svg>
+                    <div className="health-gauge-legend">
+                      <div className="health-gauge-factor">
+                        <span className="health-gauge-factor-label">Active positions</span>
+                        <span className="health-gauge-factor-weight">40%</span>
+                        <span className="health-gauge-factor-value">
+                          {investments.length > 0 ? Math.round((investments.filter((i) => i.active).length / investments.length) * 100) : 0}%
+                        </span>
+                      </div>
+                      <div className="health-gauge-factor">
+                        <span className="health-gauge-factor-label">Cap headroom</span>
+                        <span className="health-gauge-factor-weight">30%</span>
+                        <span className="health-gauge-factor-value">
+                          {summary?.incomeCap && summary.incomeCap > 0n ? Math.round((1 - Number(summary.capEarned) / Number(summary.incomeCap)) * 100) : 0}%
+                        </span>
+                      </div>
+                      <div className="health-gauge-factor">
+                        <span className="health-gauge-factor-label">Withdrawable ratio</span>
+                        <span className="health-gauge-factor-weight">30%</span>
+                        <span className="health-gauge-factor-value">
+                          {summary?.totalInvested && summary.totalInvested > 0n ? Math.min(100, Math.round((Number(summary.withdrawable) / Number(summary.totalInvested)) * 100)) : 0}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="terms-note"><CircleHelp size={13} /> Health score combines active positions, cap headroom, and withdrawable ratio. Not a financial assessment.</p>
+                </>
+              )}
+            </section>
+
             <section className="data-section plan-compare-section">
               <div className="section-heading">
                 <div>
