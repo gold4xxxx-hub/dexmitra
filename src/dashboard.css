@@ -1219,6 +1219,40 @@
   font: 700 0.9rem var(--mono);
 }
 
+/* --- Withdrawal Cooldown --- */
+.withdraw-cooldown {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #0B1410;
+  transition: all 0.3s ease;
+}
+.withdraw-cooldown.ready {
+  border-color: rgba(16, 185, 129, 0.35);
+  background: rgba(16, 185, 129, 0.08);
+}
+.withdraw-cooldown.on-cooldown {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: #0B1410;
+}
+.withdraw-cooldown-label {
+  color: var(--secondary);
+  font: 500 0.75rem var(--display);
+  letter-spacing: 0.02em;
+}
+.withdraw-cooldown.ready .withdraw-cooldown-label { color: #34d399; }
+.withdraw-cooldown.on-cooldown .withdraw-cooldown-label { color: var(--muted); }
+.withdraw-cooldown-timer {
+  color: #fca5a5;
+  font: 700 0.9rem var(--mono);
+  letter-spacing: 0.04em;
+  tabular-nums: tabular-nums;
+}
+
 /* --- Member Since --- */
 .member-since {
   display: inline-flex;

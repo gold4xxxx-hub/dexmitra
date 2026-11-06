@@ -108,6 +108,20 @@ function prettyAmount(value: bigint | undefined, decimals: number) {
   return trimmedFraction ? `${grouped}.${trimmedFraction}` : grouped
 }
 
+function formatCooldown(seconds: number) {
+  if (seconds <= 0) return 'Ready'
+  const d = Math.floor(seconds / 86400)
+  const h = Math.floor((seconds % 86400) / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  const s = seconds % 60
+  const parts: string[] = []
+  if (d > 0) parts.push(`${d}d`)
+  if (h > 0 || d > 0) parts.push(`${h}h`)
+  if (m > 0 || h > 0 || d > 0) parts.push(`${m}m`)
+  parts.push(`${s}s`)
+  return parts.join(' ')
+}
+
 function readableError(error: unknown) {
   if (error instanceof Error) {
     const message = error.message
@@ -190,6 +204,7 @@ function App() {
   const [txHash, setTxHash] = useState('')
   const [chartTab, setChartTab] = useState<'breakdown' | 'timeline'>('breakdown')
   const [copiedLink, setCopiedLink] = useState(false)
+  const [withdrawCooldownRemaining, setWithdrawCooldownRemaining] = useState(0)
   useEffect(() => {
     localStorage.setItem('dexmitra-token', tokenAddress)
   }, [tokenAddress])
@@ -338,6 +353,23 @@ function App() {
     return () => provider.removeListener?.('accountsChanged', handleAccounts)
   }, [])
 
+  // Withdrawal cooldown countdown ticker
+  useEffect(() => {
+    if (!summary?.nextWithdrawAt) {
+      const timer = setTimeout(() => setWithdrawCooldownRemaining(0), 0)
+      return () => clearTimeout(timer)
+    }
+    const target = Number(summary.nextWithdrawAt)
+    const update = () => {
+      const now = Math.floor(Date.now() / 1000)
+      const remaining = Math.max(0, target - now)
+      setWithdrawCooldownRemaining(remaining)
+    }
+    update()
+    const interval = setInterval(update, 1000)
+    return () => clearInterval(interval)
+  }, [summary?.nextWithdrawAt])
+
   // Scroll-reveal: observe all .reveal-on-scroll elements
   useEffect(() => {
     if (loading) return
@@ -485,7 +517,8 @@ function App() {
     loading ||
     Boolean(terms?.paused) ||
     (action === 'register' && Boolean(summary?.registered)) ||
-    (action === 'upgrade' && !upgradeReady)
+    (action === 'upgrade' && !upgradeReady) ||
+    (action === 'withdraw' && withdrawCooldownRemaining > 0)
 
   return (
     <div className="app-shell">
@@ -1067,7 +1100,15 @@ function App() {
                     <label className="field-label" htmlFor="amount">Amount</label>
                     <div className="amount-wrap"><input id="amount" type="number" min="0" step="any" inputMode="decimal" value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="0.00" required /><span>{action === 'reinvest' ? 'units' : tokenSymbol}</span></div>
                     {action === 'invest' && terms && <p className="form-hint">Range: {prettyAmount(terms.minInvest / tokenScale, tokenDecimals)} to {prettyAmount(terms.maxInvest / tokenScale, tokenDecimals)} {tokenSymbol}</p>}
-                    {action === 'withdraw' && <p className="form-hint">Available: {prettyAmount(summary?.withdrawable, unitDecimals)} contract units</p>}
+                    {action === 'withdraw' && (
+                      <>
+                        <p className="form-hint">Available: {prettyAmount(summary?.withdrawable, unitDecimals)} contract units</p>
+                        <div className={`withdraw-cooldown ${withdrawCooldownRemaining <= 0 ? 'ready' : 'on-cooldown'}`}>
+                          <span className="withdraw-cooldown-label">{withdrawCooldownRemaining <= 0 ? '✓ Withdrawal available' : '⏳ Next withdrawal in'}</span>
+                          {withdrawCooldownRemaining > 0 && <span className="withdraw-cooldown-timer">{formatCooldown(withdrawCooldownRemaining)}</span>}
+                        </div>
+                      </>
+                    )}
                     {action === 'reinvest' && <p className="form-hint">Reinvest amount uses the contract's {unitDecimals}-decimal internal unit.</p>}
                   </>
                 )}
