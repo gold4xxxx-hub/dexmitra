@@ -1624,6 +1624,89 @@
   .cap-gauge-legend { width: 100%; }
 }
 
+/* --- Toast Notifications --- */
+.toast-container {
+  position: fixed;
+  top: 84px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 380px;
+  pointer-events: none;
+}
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #121F19;
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
+  animation: toast-slide-in 0.3s ease both;
+  transition: all 0.2s ease;
+}
+.toast-success {
+  border-color: rgba(16, 185, 129, 0.30);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, #121F19 100%);
+}
+.toast-error {
+  border-color: rgba(165, 62, 54, 0.30);
+  background: linear-gradient(135deg, rgba(165, 62, 54, 0.12) 0%, #121F19 100%);
+}
+.toast-info {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: #121F19;
+}
+.toast-icon {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--line);
+}
+.toast-success .toast-icon { color: #34d399; border-color: rgba(16, 185, 129, 0.30); background: rgba(16, 185, 129, 0.10); }
+.toast-error .toast-icon { color: #fca5a5; border-color: rgba(165, 62, 54, 0.30); background: rgba(165, 62, 54, 0.10); }
+.toast-info .toast-icon { color: var(--secondary); }
+.toast-message {
+  flex: 1 1 auto;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.toast-dismiss {
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+.toast-dismiss:hover { color: var(--ink); }
+@keyframes toast-slide-in {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@media (max-width: 640px) {
+  .toast-container {
+    top: auto;
+    bottom: 20px;
+    right: 12px;
+    left: 12px;
+    max-width: none;
+  }
+}
+
 /* --- Member Since --- */
 .member-since {
   display: inline-flex;

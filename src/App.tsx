@@ -93,6 +93,12 @@ type ContractTerms = {
 
 type Action = 'register' | 'invest' | 'withdraw' | 'reinvest' | 'upgrade'
 
+type Toast = {
+  id: number
+  type: 'success' | 'error' | 'info'
+  message: string
+}
+
 type TxRecord = {
   type: Action
   hash: `0x${string}`
@@ -218,6 +224,7 @@ function App() {
   const [copiedAddress, setCopiedAddress] = useState(false)
   const [withdrawCooldownRemaining, setWithdrawCooldownRemaining] = useState(0)
   const [timelineTab, setTimelineTab] = useState<'positions' | 'events'>('positions')
+  const [toasts, setToasts] = useState<Toast[]>([])
   const [txHistory, setTxHistory] = useState<TxRecord[]>(() => {
     try {
       const saved = localStorage.getItem('dexmitra-tx-history')
@@ -474,7 +481,9 @@ function App() {
       if (!accounts[0] || !isAddress(accounts[0])) throw new Error('The wallet did not return a valid address.')
       setAccount(getAddress(accounts[0]))
     } catch (connectError) {
-      setError(readableError(connectError))
+      const msg = readableError(connectError)
+      setError(msg)
+      addToast('error', msg)
     }
   }
 
@@ -542,6 +551,7 @@ function App() {
       setNotice('Transaction submitted. Waiting for BNB Smart Chain confirmation...')
       await publicClient.waitForTransactionReceipt({ hash })
       setNotice('Transaction confirmed.')
+      addToast('success', `${action.charAt(0).toUpperCase() + action.slice(1)} transaction confirmed!`)
       setAmount('')
       // Log transaction to history
       const record: TxRecord = {
@@ -549,12 +559,15 @@ function App() {
         hash,
         amount: amount || (action === 'register' ? terms?.registrationFee?.toString() ?? '' : ''),
         token: action === 'reinvest' ? 'units' : tokenSymbol,
+        // eslint-disable-next-line react-hooks/purity
         timestamp: Date.now(),
       }
       setTxHistory((prev) => [record, ...prev].slice(0, 50))
       setRefreshVersion((version) => version + 1)
     } catch (actionError) {
-      setError(readableError(actionError))
+      const msg = readableError(actionError)
+      setError(msg)
+      addToast('error', msg)
     } finally {
       setBusy(false)
     }
@@ -577,6 +590,18 @@ function App() {
     setAction(next)
     setNotice('')
     setError('')
+  }
+
+  // Toast notification system
+  const addToast = (type: 'success' | 'error' | 'info', message: string) => {
+    const id = Date.now()
+    setToasts((prev) => [...prev, { id, type, message }])
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id))
+    }, 5000)
+  }
+  const dismissToast = (id: number) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id))
   }
   const submitDisabled =
     busy ||
@@ -1449,6 +1474,23 @@ function App() {
           <span>Contract values are provided as-is; verify them on <a href={`https://bscscan.com/address/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer">BscScan <ExternalLink size={11} /></a></span>
         </footer>
       </main>
+
+      {/* Toast Notifications */}
+      <div className="toast-container">
+        {toasts.map((toast) => (
+          <div key={toast.id} className={`toast toast-${toast.type}`} role="alert">
+            <div className="toast-icon">
+              {toast.type === 'success' && <Check size={16} />}
+              {toast.type === 'error' && <BadgeAlert size={16} />}
+              {toast.type === 'info' && <CircleHelp size={16} />}
+            </div>
+            <span className="toast-message">{toast.message}</span>
+            <button type="button" className="toast-dismiss" onClick={() => dismissToast(toast.id)} aria-label="Dismiss notification">
+              <span aria-hidden="true">×</span>
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
