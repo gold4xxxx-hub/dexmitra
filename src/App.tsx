@@ -249,6 +249,8 @@ function App() {
   const [copiedAddress, setCopiedAddress] = useState(false)
   const [withdrawCooldownRemaining, setWithdrawCooldownRemaining] = useState(0)
   const [timelineTab, setTimelineTab] = useState<'positions' | 'events'>('positions')
+  const [pullToRefreshState, setPullToRefreshState] = useState<'idle' | 'pulling' | 'refreshing'>('idle')
+  const [pullDistance, setPullDistance] = useState(0)
   const [loadRetry, setLoadRetry] = useState(0)
   const [gasPrice, setGasPrice] = useState<number | null>(null)
   const [toasts, setToasts] = useState<Toast[]>([])
@@ -444,6 +446,58 @@ function App() {
     }
     provider.on('accountsChanged', handleAccounts)
     return () => provider.removeListener?.('accountsChanged', handleAccounts)
+  }, [])
+
+  // Pull-to-refresh for mobile
+  useEffect(() => {
+    const startYRef = { current: 0 }
+    const isPullingRef = { current: false }
+    const threshold = 80
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (window.scrollY === 0) {
+        startYRef.current = e.touches[0].clientY
+        isPullingRef.current = true
+      }
+    }
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isPullingRef.current) return
+      const currentY = e.touches[0].clientY
+      const distance = currentY - startYRef.current
+      if (distance > 0 && distance < 150) {
+        setPullDistance(distance)
+        setPullToRefreshState('pulling')
+      }
+    }
+
+    const handleTouchEnd = () => {
+      if (!isPullingRef.current) return
+      isPullingRef.current = false
+      setPullDistance((prev) => {
+        if (prev >= threshold) {
+          setPullToRefreshState('refreshing')
+          setRefreshVersion((v) => v + 1)
+          setTimeout(() => {
+            setPullToRefreshState('idle')
+            setPullDistance(0)
+          }, 1000)
+        } else {
+          setPullToRefreshState('idle')
+        }
+        return prev >= threshold ? prev : 0
+      })
+    }
+
+    document.addEventListener('touchstart', handleTouchStart, { passive: true })
+    document.addEventListener('touchmove', handleTouchMove, { passive: true })
+    document.addEventListener('touchend', handleTouchEnd, { passive: true })
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart)
+      document.removeEventListener('touchmove', handleTouchMove)
+      document.removeEventListener('touchend', handleTouchEnd)
+    }
   }, [])
 
   // Fetch BSC gas price every 30 seconds
@@ -746,6 +800,16 @@ function App() {
           )}
         </div>
       </header>
+
+      {/* Pull-to-refresh indicator (mobile) */}
+      {pullToRefreshState !== 'idle' && (
+        <div className={`pull-to-refresh ${pullToRefreshState}`}>
+          <div className="pull-to-refresh-spinner" style={{ transform: `rotate(${pullDistance * 2}deg)` }} />
+          <span className="pull-to-refresh-text">
+            {pullToRefreshState === 'pulling' ? (pullDistance >= 80 ? 'Release to refresh' : 'Pull to refresh') : 'Refreshing...'}
+          </span>
+        </div>
+      )}
 
       <main id="top" className="main-content">
         <div className="page-heading">
