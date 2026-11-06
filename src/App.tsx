@@ -10,9 +10,7 @@ import {
   Landmark,
   LoaderCircle,
   RefreshCw,
-  Moon,
   ShieldAlert,
-  Sun,
   Wallet,
 } from 'lucide-react'
 import {
@@ -251,10 +249,6 @@ function App() {
   const [copiedAddress, setCopiedAddress] = useState(false)
   const [withdrawCooldownRemaining, setWithdrawCooldownRemaining] = useState(0)
   const [timelineTab, setTimelineTab] = useState<'positions' | 'events'>('positions')
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
-    const saved = localStorage.getItem('dexmitra-theme')
-    return saved === 'light' ? 'light' : 'dark'
-  })
   const [pullToRefreshState, setPullToRefreshState] = useState<'idle' | 'pulling' | 'refreshing'>('idle')
   const [pullDistance, setPullDistance] = useState(0)
   const [loadRetry, setLoadRetry] = useState(0)
@@ -272,11 +266,6 @@ function App() {
   useEffect(() => {
     localStorage.setItem('dexmitra-token', tokenAddress)
   }, [tokenAddress])
-
-  useEffect(() => {
-    localStorage.setItem('dexmitra-theme', theme)
-    document.documentElement.setAttribute('data-theme', theme)
-  }, [theme])
 
   useEffect(() => {
     localStorage.setItem('dexmitra-tx-history', JSON.stringify(txHistory))
@@ -787,16 +776,13 @@ function App() {
     (action === 'withdraw' && withdrawCooldownRemaining > 0)
 
   return (
-    <div className="app-shell" data-theme={theme}>
+    <div className="app-shell">
       <header className="topbar">
         <a className="brand" href="#top" aria-label="Dexmitra dashboard">
           <span className="brand-mark"><Landmark size={16} strokeWidth={2} /></span>
           <span>dexmitra<span className="brand-period">.</span></span>
         </a>
         <div className="topbar-right">
-          <button type="button" className="theme-toggle" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label="Toggle theme">
-            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-          </button>
           <a className="network-pill" href="https://bscscan.com" target="_blank" rel="noreferrer">
             <span className="network-dot" /> BNB Chain <ExternalLink size={12} />
           </a>
