@@ -249,6 +249,7 @@ function App() {
   const [copiedAddress, setCopiedAddress] = useState(false)
   const [withdrawCooldownRemaining, setWithdrawCooldownRemaining] = useState(0)
   const [timelineTab, setTimelineTab] = useState<'positions' | 'events'>('positions')
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set())
   const [loadRetry, setLoadRetry] = useState(0)
   const [gasPrice, setGasPrice] = useState<number | null>(null)
   const [toasts, setToasts] = useState<Toast[]>([])
@@ -700,6 +701,15 @@ function App() {
     setError('')
   }
 
+  const toggleSection = (id: string) => {
+    setCollapsedSections((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
   // Toast notification system
   const addToast = (type: 'success' | 'error' | 'info', message: string) => {
     // eslint-disable-next-line react-hooks/purity
@@ -820,13 +830,18 @@ function App() {
         <div className="workspace-grid">
           <div className="left-column">
             <section className="data-section positions-section reveal-on-scroll">
-              <div className="section-heading">
+              <div className="section-heading collapsible-heading" onClick={() => toggleSection('positions')}>
                 <div>
                   <p className="eyebrow">PORTFOLIO</p>
                   <h2>Investment positions</h2>
                 </div>
-                <span className="count-pill">{investments.filter((item) => item.active).length} active</span>
+                <div className="collapsible-controls">
+                  <span className="count-pill">{investments.filter((item) => item.active).length} active</span>
+                  <span className={`collapsible-chevron ${collapsedSections.has('positions') ? 'collapsed' : ''}`}>&#9660;</span>
+                </div>
               </div>
+              {!collapsedSections.has('positions') && (
+              <>
               {!account ? (
                 <EmptyState icon={<Wallet size={24} />} title="Connect a wallet" description="Your investment positions will appear here once you connect." cta="Connect wallet" onCta={() => void connectWallet()} />
               ) : loading ? (
@@ -875,16 +890,23 @@ function App() {
                   })}
                 </div>
               )}
+              </>
+              )}
             </section>
 
             <section className="data-section terms-section reveal-on-scroll">
-              <div className="section-heading">
+              <div className="section-heading collapsible-heading" onClick={() => toggleSection('plans')}>
                 <div>
                   <p className="eyebrow">READ FROM CONTRACT</p>
                   <h2>Plan parameters</h2>
                 </div>
-                <span className="live-read"><span /> Live</span>
+                <div className="collapsible-controls">
+                  <span className="live-read"><span /> Live</span>
+                  <span className={`collapsible-chevron ${collapsedSections.has('plans') ? 'collapsed' : ''}`}>&#9660;</span>
+                </div>
               </div>
+              {!collapsedSections.has('plans') && (
+              <>
               <div className="tiers-grid">
                 {planRows.map((planId) => (
                   <div key={planId} className={`tier-card reveal-on-scroll ${is3x && planId === 2 ? 'is-current' : ''}`}>
@@ -919,6 +941,8 @@ function App() {
                 </span>
               </div>
               <p className="terms-note"><CircleHelp size={13} /> Rates and caps are contract parameters, not promises of payment.</p>
+              </>
+              )}
             </section>
 
             <section className="data-section plan-compare-section">
