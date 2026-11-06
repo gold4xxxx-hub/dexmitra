@@ -2105,6 +2105,32 @@
   .plan-compare-grid { grid-template-columns: 1fr; }
 }
 
+/* --- Mobile Sticky CTA Bar --- */
+.mobile-sticky-cta {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 99;
+  padding: 10px 16px;
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+  background: rgba(7, 13, 10, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.mobile-sticky-cta .submit-button {
+  margin-top: 0;
+  min-height: 44px;
+  font-size: 0.85rem;
+}
+@media (max-width: 760px) {
+  .mobile-sticky-cta { display: block; }
+  .action-form .submit-button { display: none; }
+  .main-content { padding-bottom: 160px; }
+}
+
 /* --- Mobile Bottom Navigation Bar --- */
 .mobile-bottom-nav {
   display: none;

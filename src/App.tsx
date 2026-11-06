@@ -1719,6 +1719,21 @@ function App() {
         </footer>
       </main>
 
+      {/* Mobile Sticky CTA Bar */}
+      <div className="mobile-sticky-cta" aria-hidden="true">
+        <button
+          type="button"
+          className={`submit-button action-button-${action}`}
+          disabled={submitDisabled}
+          onClick={() => {
+            const form = document.querySelector('.action-form') as HTMLFormElement
+            if (form) form.requestSubmit()
+          }}
+        >
+          {busy ? <><span className="loader"></span> Processing</> : <>{action === 'withdraw' ? <ArrowUpRight size={15} /> : <ArrowDownLeft size={15} />}{action === 'upgrade' ? 'Confirm plan change' : action === 'register' ? 'Register account' : `${action[0].toUpperCase()}${action.slice(1)}`}</>}
+        </button>
+      </div>
+
       {/* Mobile Bottom Navigation Bar */}
       <nav className="mobile-bottom-nav" aria-label="Contract actions">
         {(['register', 'invest', 'withdraw', 'reinvest', 'upgrade'] as Action[]).map((tab) => (
