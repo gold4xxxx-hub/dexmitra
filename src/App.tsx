@@ -155,6 +155,11 @@ function Counter({ target, decimals }: CounterProps) {
   return <span className="tabular-nums">{formatCounter(displayValue, decimals)}</span>
 }
 
+/* Skeleton loader for metric values */
+function Skeleton({ width = 80 }: { width?: number }) {
+  return <span className="skeleton" style={{ width: `${width}px` }} />
+}
+
 function App() {
   const [account, setAccount] = useState<Address | null>(null)
   const [summary, setSummary] = useState<UserSummary | null>(null)
@@ -500,22 +505,22 @@ function App() {
         <section className="metrics" aria-label="Account summary">
           <article className="metric metric-primary reveal-on-scroll">
             <div className="metric-label">TOTAL INVESTED <span title="Value reported by the contract."><CircleHelp size={12} aria-label="Value reported by the contract" /></span></div>
-            <div className="metric-value">{loading ? '—' : <Counter target={summary?.totalInvested ?? 0n} decimals={unitDecimals} />}<small>units</small></div>
+            <div className="metric-value">{loading ? <Skeleton width={60} /> : <Counter target={summary?.totalInvested ?? 0n} decimals={unitDecimals} />}<small>units</small></div>
             <div className="metric-foot">Lifetime deposits</div>
           </article>
           <article className="metric reveal-on-scroll">
             <div className="metric-label">ACTIVE PRINCIPAL</div>
-            <div className="metric-value">{loading ? '—' : <Counter target={summary?.activeInvested ?? 0n} decimals={unitDecimals} />}<small>units</small></div>
+            <div className="metric-value">{loading ? <Skeleton width={60} /> : <Counter target={summary?.activeInvested ?? 0n} decimals={unitDecimals} />}<small>units</small></div>
             <div className="metric-foot">Currently active</div>
           </article>
           <article className="metric metric-earn reveal-on-scroll">
             <div className="metric-label">WITHDRAWABLE</div>
-            <div className="metric-value">{loading ? '—' : <Counter target={summary?.withdrawable ?? 0n} decimals={unitDecimals} />}<small>units</small></div>
+            <div className="metric-value">{loading ? <Skeleton width={60} /> : <Counter target={summary?.withdrawable ?? 0n} decimals={unitDecimals} />}<small>units</small></div>
             <div className="metric-foot">Contract-reported balance</div>
           </article>
           <article className="metric metric-earn reveal-on-scroll">
             <div className="metric-label">PENDING ROI</div>
-            <div className="metric-value">{loading ? '—' : <Counter target={summary?.pendingRoi ?? 0n} decimals={unitDecimals} />}<small>units</small></div>
+            <div className="metric-value">{loading ? <Skeleton width={60} /> : <Counter target={summary?.pendingRoi ?? 0n} decimals={unitDecimals} />}<small>units</small></div>
             <div className="metric-foot">Not a guaranteed return</div>
           </article>
         </section>
