@@ -99,6 +99,15 @@ type Toast = {
   message: string
 }
 
+type ConfirmModal = {
+  action: Action
+  amount: string
+  token: string
+  tokenSymbol: string
+  fee?: string
+  details: string
+}
+
 type TxRecord = {
   type: Action
   hash: `0x${string}`
@@ -225,6 +234,7 @@ function App() {
   const [withdrawCooldownRemaining, setWithdrawCooldownRemaining] = useState(0)
   const [timelineTab, setTimelineTab] = useState<'positions' | 'events'>('positions')
   const [toasts, setToasts] = useState<Toast[]>([])
+  const [confirmModal, setConfirmModal] = useState<ConfirmModal | null>(null)
   const [txHistory, setTxHistory] = useState<TxRecord[]>(() => {
     try {
       const saved = localStorage.getItem('dexmitra-tx-history')
@@ -516,10 +526,9 @@ function App() {
       if (!account) throw new Error('Connect your wallet first.')
       if (!terms || terms.paused) throw new Error('Contract actions are currently unavailable.')
       if (action === 'register' && summary?.registered) throw new Error('This wallet is already registered.')
-      const client = await walletClient()
       const token = isAddress(tokenAddress) ? getAddress(tokenAddress) : null
-      let hash: `0x${string}`
 
+      // Validate specific inputs first
       if (action === 'register') {
         if (!token || !isAddress(referrer)) throw new Error('Enter a valid payment token and referrer address.')
         const referrerAddress = getAddress(referrer)
@@ -527,20 +536,79 @@ function App() {
           const referrerSummary = await publicClient.readContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'getUserSummary', args: [referrerAddress] }) as unknown as UserSummary
           if (!referrerSummary.registered) throw new Error('Referrer is not registered. Use 0x0...0 for the first/root registration, or an already-registered account.')
         }
-        await approveToken(terms.registrationFee / tokenScale)
-        hash = await client.writeContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'register', args: [getAddress(referrer), Number(plan), token] })
       } else if (action === 'invest') {
         if (!token || !amount) throw new Error('Enter an amount and a valid payment token.')
         const value = parseUnits(amount, tokenDecimals)
         const minInvest = terms.minInvest / tokenScale
         const maxInvest = terms.maxInvest / tokenScale
         if (value < minInvest || value > maxInvest) throw new Error(`Amount must be between ${prettyAmount(minInvest, tokenDecimals)} and ${prettyAmount(maxInvest, tokenDecimals)} ${tokenSymbol}.`)
-        await approveToken(value)
-        hash = await client.writeContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'invest', args: [parseUnits(amount, 18), token] })
       } else if (action === 'withdraw') {
         if (!token || !amount) throw new Error('Enter an amount and a valid payment token.')
-        hash = await client.writeContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'withdraw', args: [token, parseUnits(amount, tokenDecimals)] })
       } else if (action === 'reinvest') {
+        if (!amount) throw new Error('Enter an amount to reinvest.')
+      }
+
+      // Build confirmation modal details
+      let details = ''
+      let fee = ''
+      if (action === 'register') {
+        details = `Register with plan ${planNames[Number(plan)]} using ${tokenSymbol}. Referrer: ${referrerMode === 'root' ? '0x0...0 (root)' : shortAddress(referrer)}`
+        fee = `${prettyAmount(terms.registrationFee / tokenScale, tokenDecimals)} ${tokenSymbol} (registration fee)`
+      } else if (action === 'invest') {
+        details = `Invest ${amount} ${tokenSymbol}.`
+      } else if (action === 'withdraw') {
+        details = `Withdraw ${amount} ${tokenSymbol}. Available: ${prettyAmount(summary?.withdrawable, unitDecimals)} contract units.`
+      } else if (action === 'reinvest') {
+        const reinvestFee = (parseUnits(amount, 18) * 100n) / 10000n
+        details = `Reinvest ${amount} units. A 1% fee (${prettyAmount(reinvestFee, 18)} units) will be deducted.`
+        fee = `${prettyAmount(reinvestFee, 18)} units (1% fee)`
+      } else {
+        details = `Upgrade to Plan 3x (auto-upgrade). Requires ${upgradeDirectsNeeded} directs.`
+      }
+
+      setConfirmModal({
+        action,
+        amount,
+        token: token ?? '',
+        tokenSymbol,
+        fee,
+        details,
+      })
+      setBusy(false)
+      return
+    } catch (actionError) {
+      const msg = readableError(actionError)
+      setError(msg)
+      addToast('error', msg)
+      setBusy(false)
+    }
+  }
+
+  async function executeConfirmedAction() {
+    if (!confirmModal) return
+    setBusy(true)
+    setError('')
+    setNotice('')
+    setTxHash('')
+    setConfirmModal(null)
+    try {
+      const client = await walletClient()
+      const token = isAddress(tokenAddress) ? getAddress(tokenAddress) : null
+      let hash: `0x${string}`
+
+      if (confirmModal.action === 'register') {
+        if (!token) throw new Error('Enter a valid payment token and referrer address.')
+        await approveToken(terms!.registrationFee / tokenScale)
+        hash = await client.writeContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'register', args: [getAddress(referrer), Number(plan), token] })
+      } else if (confirmModal.action === 'invest') {
+        if (!token || !amount) throw new Error('Enter an amount and a valid payment token.')
+        const value = parseUnits(amount, tokenDecimals)
+        await approveToken(value)
+        hash = await client.writeContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'invest', args: [parseUnits(amount, 18), token] })
+      } else if (confirmModal.action === 'withdraw') {
+        if (!token || !amount) throw new Error('Enter an amount and a valid payment token.')
+        hash = await client.writeContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'withdraw', args: [token, parseUnits(amount, tokenDecimals)] })
+      } else if (confirmModal.action === 'reinvest') {
         if (!amount) throw new Error('Enter an amount to reinvest.')
         hash = await client.writeContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'reinvest', args: [parseUnits(amount, 18)] })
       } else {
@@ -551,18 +619,17 @@ function App() {
       setNotice('Transaction submitted. Waiting for BNB Smart Chain confirmation...')
       await publicClient.waitForTransactionReceipt({ hash })
       setNotice('Transaction confirmed.')
-      addToast('success', `${action.charAt(0).toUpperCase() + action.slice(1)} transaction confirmed!`)
-      setAmount('')
-      // Log transaction to history
+      addToast('success', `${confirmModal.action.charAt(0).toUpperCase() + confirmModal.action.slice(1)} transaction confirmed!`)
       const record: TxRecord = {
-        type: action,
+        type: confirmModal.action,
         hash,
-        amount: amount || (action === 'register' ? terms?.registrationFee?.toString() ?? '' : ''),
-        token: action === 'reinvest' ? 'units' : tokenSymbol,
+        amount: amount || (confirmModal.action === 'register' ? terms?.registrationFee?.toString() ?? '' : ''),
+        token: confirmModal.action === 'reinvest' ? 'units' : tokenSymbol,
         // eslint-disable-next-line react-hooks/purity
         timestamp: Date.now(),
       }
       setTxHistory((prev) => [record, ...prev].slice(0, 50))
+      setAmount('')
       setRefreshVersion((version) => version + 1)
     } catch (actionError) {
       const msg = readableError(actionError)
@@ -571,6 +638,11 @@ function App() {
     } finally {
       setBusy(false)
     }
+  }
+
+  function cancelTransaction() {
+    setConfirmModal(null)
+    setBusy(false)
   }
 
   const planNames: Record<number, string> = { 0: '2x', 2: '3x', 1: '2.5x' }
@@ -594,6 +666,7 @@ function App() {
 
   // Toast notification system
   const addToast = (type: 'success' | 'error' | 'info', message: string) => {
+    // eslint-disable-next-line react-hooks/purity
     const id = Date.now()
     setToasts((prev) => [...prev, { id, type, message }])
     setTimeout(() => {
@@ -1491,6 +1564,45 @@ function App() {
           </div>
         ))}
       </div>
+
+      {/* Confirmation Modal */}
+      {confirmModal && (
+        <div className="modal-overlay" onClick={cancelTransaction}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-icon">
+                <ShieldAlert size={20} />
+              </div>
+              <div className="modal-title">
+                <p className="eyebrow">CONFIRM TRANSACTION</p>
+                <h3>{confirmModal.action === 'upgrade' ? 'Confirm plan change' : confirmModal.action === 'register' ? 'Register account' : confirmModal.action.charAt(0).toUpperCase() + confirmModal.action.slice(1)}</h3>
+              </div>
+              <button type="button" className="modal-close" onClick={cancelTransaction} aria-label="Close">
+                <span aria-hidden="true">×</span>
+              </button>
+            </div>
+            <div className="modal-body">
+              <p className="modal-details">{confirmModal.details}</p>
+              {confirmModal.fee && (
+                <div className="modal-fee">
+                  <span className="modal-fee-label">Fee</span>
+                  <span className="modal-fee-value">{confirmModal.fee}</span>
+                </div>
+              )}
+              <div className="modal-warning">
+                <ShieldAlert size={14} />
+                <span>Transactions are irreversible. Verify the details before confirming.</span>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="modal-cancel-btn" onClick={cancelTransaction}>Cancel</button>
+              <button type="button" className="modal-confirm-btn" onClick={() => void executeConfirmedAction()} disabled={busy}>
+                {busy ? <><span className="loader"></span> Processing</> : <><Check size={15} /> Confirm & Sign</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
