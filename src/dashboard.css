@@ -1065,55 +1065,6 @@
   line-height: 1.5;
 }
 .referral-tier-info svg { flex: 0 0 auto; margin-top: 1px; color: var(--brand); }
-.referral-share-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--line);
-  flex-wrap: wrap;
-}
-.referral-share-label {
-  color: var(--muted);
-  font: 500 0.68rem var(--mono);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  margin-right: 4px;
-}
-.referral-share-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: 8px;
-  border: 1px solid var(--line);
-  background: #121F19;
-  color: var(--secondary);
-  font: 600 0.75rem var(--display);
-  text-decoration: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.referral-share-btn:hover {
-  border-color: var(--line-strong);
-  color: var(--ink);
-}
-.referral-share-twitter:hover {
-  border-color: #1DA1F2;
-  color: #1DA1F2;
-  background: rgba(29, 161, 242, 0.08);
-}
-.referral-share-telegram:hover {
-  border-color: #0088cc;
-  color: #0088cc;
-  background: rgba(0, 136, 204, 0.08);
-}
-.referral-share-whatsapp:hover {
-  border-color: #25D366;
-  color: #25D366;
-  background: rgba(37, 211, 102, 0.08);
-}
 @media (max-width: 640px) {
   .referral-link-row { flex-direction: column; }
   .referral-copy-btn { width: 100%; justify-content: center; }
