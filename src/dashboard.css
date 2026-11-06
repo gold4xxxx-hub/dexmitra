@@ -177,20 +177,21 @@
 }
 
 .contract-strip code {
-  color: var(--ink);
+  color: #FFFFFF;
   font: 600 12px var(--mono);
   max-width: 260px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
 
 .contract-strip > a {
   display: inline-flex;
-  color: var(--secondary);
+  color: #FFFFFF;
   transition: color 0.15s ease;
 }
-.contract-strip > a:hover { color: var(--brand); }
+.contract-strip > a:hover { color: #34d399; }
 
 .contract-balance {
   display: inline-flex;
@@ -208,9 +209,9 @@
   white-space: nowrap;
 }
 .contract-balance .contract-label {
-  color: rgba(255,255,255,0.45);
+  color: rgba(255,255,255,0.6);
   font-size: 9px;
-  font-weight: 500;
+  font-weight: 600;
   margin-right: 4px;
 }
 
@@ -224,8 +225,8 @@
   font-size: 11px;
   font-weight: 700;
   font-family: var(--display);
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
 }
 .status-chip > span {
   width: 7px; height: 7px;
@@ -300,7 +301,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: var(--muted);
+  color: var(--label);
   font: 500 0.72rem/1.2 var(--mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -314,7 +315,7 @@
   white-space: nowrap;
 }
 .metric-value small {
-  color: var(--muted);
+  color: var(--secondary);
   font: 500 10px var(--mono);
   margin-left: 4px;
 }
@@ -322,7 +323,7 @@
 
 .metric.metric-earn {
   border-color: var(--brand-border);
-  background: linear-gradient(180deg, rgba(16, 185, 129, 0.08) 0%, #0D1612 100%);
+  background: linear-gradient(180deg, rgba(16, 185, 129, 0.12) 0%, #0D1612 100%);
 }
 .metric.metric-earn .metric-value { color: #34d399; }
 
@@ -422,7 +423,7 @@
   flex-direction: column;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: linear-gradient(180deg, #121F19 0%, #0D1612 100%);
+  background: linear-gradient(180deg, #14231A 0%, #0D1612 100%);
   padding: 20px 18px 18px;
   box-shadow: var(--shadow-card);
   overflow: hidden;
@@ -465,7 +466,7 @@
   border: 1px solid rgba(16, 185, 129, 0.20);
 }
 .position-date {
-  color: var(--muted);
+  color: var(--secondary);
   font: 500 0.72rem var(--mono);
   letter-spacing: 0.04em;
 }
@@ -498,7 +499,7 @@
 }
 .stat-col { display: flex; flex-direction: column; gap: 4px; }
 .stat-label {
-  color: var(--muted);
+  color: var(--secondary);
   font: 500 0.68rem var(--mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -735,7 +736,7 @@
   border: 0;
   border-radius: 7px;
   background: transparent;
-  color: var(--secondary);
+  color: var(--ink);
   font-size: 0.78rem;
   font-weight: 600;
   text-align: center;
