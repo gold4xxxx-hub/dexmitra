@@ -40,6 +40,34 @@ html, body, #root, .app-shell {
   color-scheme: dark;
 }
 
+/* Light theme overrides */
+[data-theme="light"] {
+  --canvas: #f4f6f4;
+  --card: #ffffff;
+  --card-inner: #f8faf9;
+  --ink: #091711;
+  --secondary: #4b5e55;
+  --muted: #7a8e84;
+  --line: rgba(16, 42, 30, 0.09);
+  --line-strong: rgba(16, 42, 30, 0.18);
+  --brand: #0d3b2a;
+  --brand-deep: #071710;
+  --brand-emerald: #10b981;
+  --brand-border: rgba(13, 59, 42, 0.22);
+  --shadow-card: 0 1px 2px rgba(9, 23, 17, 0.04), 0 8px 24px -4px rgba(9, 23, 17, 0.06);
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  --shadow-focus: 0 0 0 3px rgba(16, 185, 129, 0.20);
+  --receipt-bg: #f4f7f5;
+  --receipt-border: rgba(16, 42, 30, 0.12);
+  color-scheme: light;
+}
+
+[data-theme="light"] body {
+  background: #f4f6f4;
+  background-image: radial-gradient(ellipse 80% 40% at 50% -10%, rgba(13, 59, 42, 0.04), transparent);
+  color: #091711;
+}
+
 * { box-sizing: border-box; }
 
 body {
