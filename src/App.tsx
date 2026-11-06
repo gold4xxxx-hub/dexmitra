@@ -1648,6 +1648,28 @@ function App() {
         </footer>
       </main>
 
+      {/* Mobile Bottom Navigation Bar */}
+      <nav className="mobile-bottom-nav" aria-label="Contract actions">
+        {(['register', 'invest', 'withdraw', 'reinvest', 'upgrade'] as Action[]).map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            className={`mobile-nav-btn ${action === tab ? 'selected' : ''} ${tab === 'upgrade' ? 'mobile-nav-utility' : ''}`}
+            onClick={() => selectedTab(tab)}
+            aria-label={tab === 'upgrade' ? 'Plan' : tab}
+          >
+            <span className="mobile-nav-icon">
+              {tab === 'register' && <Wallet size={16} />}
+              {tab === 'invest' && <ArrowDownLeft size={16} />}
+              {tab === 'withdraw' && <ArrowUpRight size={16} />}
+              {tab === 'reinvest' && <RefreshCw size={16} />}
+              {tab === 'upgrade' && <Check size={16} />}
+            </span>
+            <span className="mobile-nav-label">{tab === 'upgrade' ? 'Plan' : tab}</span>
+          </button>
+        ))}
+      </nav>
+
       {/* Toast Notifications */}
       <div className="toast-container">
         {toasts.map((toast) => (
