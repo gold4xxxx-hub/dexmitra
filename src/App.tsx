@@ -895,6 +895,64 @@ function App() {
               <p className="terms-note"><CircleHelp size={13} /> Rates and caps are contract parameters, not promises of payment.</p>
             </section>
 
+            <section className="data-section plan-compare-section">
+              <div className="section-heading">
+                <div>
+                  <p className="eyebrow">PLAN COMPARISON</p>
+                  <h2>Choose your plan</h2>
+                </div>
+              </div>
+              {terms ? (
+                <div className="plan-compare-grid">
+                  <div className={`plan-compare-card ${is2x ? 'is-current' : ''}`}>
+                    <div className="plan-compare-header">
+                      <span className="plan-compare-name">Plan 2x</span>
+                      {is2x && <span className="plan-compare-current">Current</span>}
+                    </div>
+                    <div className="plan-compare-metric">
+                      <span className="plan-compare-metric-label">Monthly ROI</span>
+                      <span className="plan-compare-metric-value">{(Number(terms.roiBps[0]) / 100).toFixed(2)}%</span>
+                    </div>
+                    <div className="plan-compare-metric">
+                      <span className="plan-compare-metric-label">Cap multiplier</span>
+                      <span className="plan-compare-metric-value">{(Number(terms.multiplierBps[0]) / 10000).toFixed(2)}x</span>
+                    </div>
+                    <div className="plan-compare-metric">
+                      <span className="plan-compare-metric-label">Directs needed</span>
+                      <span className="plan-compare-metric-value">{String(terms.minDirects[0])}</span>
+                    </div>
+                    <div className="plan-compare-footer">
+                      <span className="plan-compare-footer-text">Final plan — cannot be upgraded</span>
+                    </div>
+                  </div>
+                  <div className={`plan-compare-card ${is25x || is3x ? 'is-current' : ''}`}>
+                    <div className="plan-compare-header">
+                      <span className="plan-compare-name">Plan 2.5x</span>
+                      {(is25x || is3x) && <span className="plan-compare-current">{is3x ? 'Upgraded to 3x' : 'Current'}</span>}
+                    </div>
+                    <div className="plan-compare-metric">
+                      <span className="plan-compare-metric-label">Monthly ROI</span>
+                      <span className="plan-compare-metric-value plan-compare-metric-value-earn">{(Number(terms.roiBps[1]) / 100).toFixed(2)}%</span>
+                    </div>
+                    <div className="plan-compare-metric">
+                      <span className="plan-compare-metric-label">Cap multiplier</span>
+                      <span className="plan-compare-metric-value plan-compare-metric-value-earn">{(Number(terms.multiplierBps[1]) / 10000).toFixed(2)}x</span>
+                    </div>
+                    <div className="plan-compare-metric">
+                      <span className="plan-compare-metric-label">Directs needed</span>
+                      <span className="plan-compare-metric-value">{String(terms.minDirects[1])} (auto-upgrades to 3x at 10)</span>
+                    </div>
+                    <div className="plan-compare-footer">
+                      <span className="plan-compare-footer-text">Auto-upgrades to 3x at {upgradeDirectsNeeded} directs</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="empty-state"><CircleHelp size={18} /><strong>Plan data unavailable</strong><span>Contract terms could not be loaded.</span></div>
+              )}
+              <p className="terms-note"><CircleHelp size={13} /> Plan 2x is final. Plan 2.5x auto-upgrades to 3x at 10 directs. Rates and caps are contract parameters.</p>
+            </section>
+
             <section className="data-section upgrade-progress-section">
               <div className="section-heading">
                 <div>
