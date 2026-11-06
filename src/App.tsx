@@ -205,6 +205,7 @@ function App() {
   const [chartTab, setChartTab] = useState<'breakdown' | 'timeline'>('breakdown')
   const [copiedLink, setCopiedLink] = useState(false)
   const [withdrawCooldownRemaining, setWithdrawCooldownRemaining] = useState(0)
+  const [livePendingRoi, setLivePendingRoi] = useState<bigint | null>(null)
   useEffect(() => {
     localStorage.setItem('dexmitra-token', tokenAddress)
   }, [tokenAddress])
@@ -369,6 +370,36 @@ function App() {
     const interval = setInterval(update, 1000)
     return () => clearInterval(interval)
   }, [summary?.nextWithdrawAt])
+
+  // ROI Accrual Live Ticker — ticks pending ROI up every second
+  useEffect(() => {
+    if (!summary || !terms || !account || investments.length === 0) {
+      const timer = setTimeout(() => setLivePendingRoi(summary?.pendingRoi ?? null), 0)
+      return () => clearTimeout(timer)
+    }
+    const roiBps = terms.roiBps[summary.plan] ?? 0n
+    const MONTH = 30 * 86400 // 30 days in seconds
+    const BPS = 10000n
+    // Calculate total per-second ROI rate from active investments
+    let ratePerSecond = 0n
+    for (const inv of investments) {
+      if (!inv.active) continue
+      const used = inv.earned + inv.otherEarned
+      if (used >= inv.cap) continue
+      // roi per second = (amount * roiBps) / (BPS * MONTH)
+      const invRate = (inv.amount * roiBps) / (BPS * BigInt(MONTH))
+      ratePerSecond += invRate
+    }
+    const basePending = summary.pendingRoi
+    const startTime = Date.now()
+    setTimeout(() => setLivePendingRoi(basePending), 0)
+    const interval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000)
+      const accrued = ratePerSecond * BigInt(elapsed)
+      setLivePendingRoi(basePending + accrued)
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [summary, terms, investments, account])
 
   // Scroll-reveal: observe all .reveal-on-scroll elements
   useEffect(() => {
@@ -588,9 +619,9 @@ function App() {
             <div className="metric-foot">Contract-reported balance</div>
           </article>
           <article className="metric metric-earn reveal-on-scroll">
-            <div className="metric-label">PENDING ROI</div>
-            <div className="metric-value">{loading ? <Skeleton width={60} /> : <Counter target={summary?.pendingRoi ?? 0n} decimals={unitDecimals} />}<small>units</small></div>
-            <div className="metric-foot">Not a guaranteed return</div>
+            <div className="metric-label">PENDING ROI <span className="live-indicator" title="Updates in real-time"><span className="live-dot" /> Live</span></div>
+            <div className="metric-value">{loading ? <Skeleton width={60} /> : <Counter target={livePendingRoi ?? summary?.pendingRoi ?? 0n} decimals={unitDecimals} />}<small>units</small></div>
+            <div className="metric-foot">Growing in real-time</div>
           </article>
         </section>
 

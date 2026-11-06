@@ -1253,6 +1253,26 @@
   tabular-nums: tabular-nums;
 }
 
+/* --- Live Indicator --- */
+.live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  color: #34d399;
+  font: 600 0.62rem var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.35);
+  animation: pulse-status 1.5s ease-in-out infinite;
+}
+
 /* --- Member Since --- */
 .member-since {
   display: inline-flex;
