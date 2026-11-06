@@ -227,6 +227,31 @@
 }
 .contract-strip > a:hover { color: #34d399; }
 
+.contract-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  color: #FFFFFF;
+  font: 600 0.7rem var(--display);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.contract-copy-btn:hover {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.12);
+  color: #34d399;
+}
+.contract-copy-btn.copied {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+}
+
 .contract-balance {
   display: inline-flex;
   align-items: center;
@@ -1251,26 +1276,6 @@
   font: 700 0.9rem var(--mono);
   letter-spacing: 0.04em;
   tabular-nums: tabular-nums;
-}
-
-/* --- Live Indicator --- */
-.live-indicator {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-left: 6px;
-  color: #34d399;
-  font: 600 0.62rem var(--mono);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-.live-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.35);
-  animation: pulse-status 1.5s ease-in-out infinite;
 }
 
 /* --- Member Since --- */
