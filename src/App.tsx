@@ -249,6 +249,7 @@ function App() {
   const [copiedAddress, setCopiedAddress] = useState(false)
   const [withdrawCooldownRemaining, setWithdrawCooldownRemaining] = useState(0)
   const [timelineTab, setTimelineTab] = useState<'positions' | 'events'>('positions')
+  const [loadRetry, setLoadRetry] = useState(0)
   const [gasPrice, setGasPrice] = useState<number | null>(null)
   const [toasts, setToasts] = useState<Toast[]>([])
   const [confirmModal, setConfirmModal] = useState<ConfirmModal | null>(null)
@@ -312,7 +313,7 @@ function App() {
     }
     void load()
     return () => { active = false }
-  }, [account, refreshVersion])
+  }, [account, refreshVersion, loadRetry])
 
   useEffect(() => {
     let active = true
@@ -789,7 +790,8 @@ function App() {
           </div>
         )}
 
-        {error && <div className="feedback error-feedback" role="alert"><BadgeAlert size={16} /><span>{error}</span><button type="button" onClick={() => setError('')} aria-label="Dismiss"><span aria-hidden="true">×</span></button></div>}
+        {terms?.paused && <div className="feedback paused-feedback" role="alert"><ShieldAlert size={16} /><span>Contract is paused. New transactions are disabled. Existing positions are safe.</span></div>}
+        {error && <div className="feedback error-feedback" role="alert"><BadgeAlert size={16} /><span>{error}</span><button type="button" className="feedback-retry-btn" onClick={() => { setError(''); setLoadRetry((v) => v + 1) }}>Retry</button><button type="button" onClick={() => setError('')} aria-label="Dismiss"><span aria-hidden="true">×</span></button></div>}
         {notice && <div className="feedback success-feedback" role="status"><Check size={16} /><span>{notice} {txHash && <a href={`https://bscscan.com/tx/${txHash}`} target="_blank" rel="noreferrer">View transaction <ExternalLink size={12} /></a>}</span></div>}
 
         <section className="metrics" aria-label="Account summary">
