@@ -1,30 +1,72 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+
+html, body, #root, .app-shell {
+  overflow-x: hidden;
+  width: 100%;
+  box-sizing: border-box;
+}
 
 :root {
-  font-family: 'DM Sans', sans-serif;
-  color: #19211d;
-  background: #f3f5ef;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  --ink: #19211d;
-  --muted: #788079;
-  --line: #e0e5dc;
-  --paper: #fff;
-  --canvas: #f3f5ef;
-  --green: #27764f;
-  --green-dark: #1b5639;
-  --lime: #cce65d;
-  --red: #a53e36;
-  --mono: 'DM Mono', monospace;
-  --display: 'Space Grotesk', sans-serif;
-  color-scheme: light;
+  /* Canvas & surfaces */
+  --canvas: #070D0A;
+  --card: #0D1612;
+  --card-inner: #121F19;
+  /* Text */
+  --ink: #F3F7F5;
+  --secondary: #94A89E;
+  --muted: #61786D;
+  /* Borders */
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.14);
+  /* Brand */
+  --brand: #10B981;
+  --brand-deep: #059669;
+  --brand-glow: rgba(16, 185, 129, 0.25);
+  --brand-surface: rgba(16, 185, 129, 0.08);
+  --brand-border: rgba(16, 185, 129, 0.35);
+  /* Semantic */
+  --danger: #a53e36;
+  --danger-bg: rgba(165, 62, 54, 0.12);
+  --receipt-bg: #09110E;
+  --receipt-border: rgba(255, 255, 255, 0.07);
+  /* Shadows */
+  --shadow-card: 0 12px 32px -8px rgba(0, 0, 0, 0.5);
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --shadow-focus: 0 0 0 3px rgba(16, 185, 129, 0.20);
+  /* Typography */
+  --display: 'Plus Jakarta Sans', sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
-body { margin: 0; min-width: 320px; min-height: 100vh; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--canvas);
+  background-image: radial-gradient(ellipse 80% 40% at 50% -10%, rgba(16, 185, 129, 0.14), transparent);
+  color: var(--ink);
+  font-family: var(--display);
+}
+
 button, input, select { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; }
-a { color: inherit; }
-::selection { color: var(--ink); background: var(--lime); }
+a { color: inherit; text-decoration: none; }
+::selection { color: var(--canvas); background: var(--brand); }
+
+/* Animations */
+@keyframes pulse-status {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.15); }
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin 1s linear infinite; }
+
+/* Utilities */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--mono);
+}
