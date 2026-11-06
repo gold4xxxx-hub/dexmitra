@@ -665,6 +665,82 @@ function App() {
               <p className="terms-note"><CircleHelp size={13} /> Rates and caps are contract parameters, not promises of payment.</p>
             </section>
 
+            <section className="data-section upgrade-progress-section">
+              <div className="section-heading">
+                <div>
+                  <p className="eyebrow">PLAN PROGRESS</p>
+                  <h2>Upgrade to 3x</h2>
+                </div>
+                {upgradeReady && <span className="count-pill">Eligible</span>}
+              </div>
+              {!account ? (
+                <div className="empty-state"><Wallet size={18} /><strong>Connect a wallet to view upgrade progress</strong><span>Your direct referral progress will appear here.</span></div>
+              ) : loading ? (
+                <div className="empty-state"><LoaderCircle className="spin" size={18} /><span>Loading…</span></div>
+              ) : (
+                <>
+                  <div className="upgrade-progress-card">
+                    <div className="upgrade-progress-header">
+                      <div className="upgrade-plan-info">
+                        <span className="upgrade-plan-name">{is3x ? 'Plan 3x' : is25x ? 'Plan 2.5x' : 'Plan 2x'}</span>
+                        <span className="upgrade-plan-status">
+                          {is3x ? 'Max tier reached' : is25x ? 'Auto-upgrades at 10 directs' : 'Final plan — cannot upgrade'}
+                        </span>
+                      </div>
+                      {upgradeReady && (
+                        <span className="upgrade-check-badge">
+                          <Check size={14} /> Eligible
+                        </span>
+                      )}
+                    </div>
+                    {is25x && (
+                      <>
+                        <div className="upgrade-progress-bar-wrap">
+                          <div className="upgrade-progress-bar">
+                            <div className="upgrade-progress-fill" style={{ width: Math.min(100, (directs / upgradeDirectsNeeded) * 100) + '%' }} />
+                          </div>
+                          <div className="upgrade-progress-label">
+                            <span>{directs} / {upgradeDirectsNeeded} directs</span>
+                            <span>{Math.min(100, Math.round((directs / upgradeDirectsNeeded) * 100))}%</span>
+                          </div>
+                        </div>
+                        <div className="upgrade-progress-details">
+                          <div className="upgrade-detail">
+                            <span className="upgrade-detail-label">Directs needed</span>
+                            <span className="upgrade-detail-value">{upgradeDirectsNeeded}</span>
+                          </div>
+                          <div className="upgrade-detail">
+                            <span className="upgrade-detail-label">Current directs</span>
+                            <span className="upgrade-detail-value">{directs}</span>
+                          </div>
+                          <div className="upgrade-detail">
+                            <span className="upgrade-detail-label">Remaining</span>
+                            <span className="upgrade-detail-value">{Math.max(0, upgradeDirectsNeeded - directs)}</span>
+                          </div>
+                        </div>
+                        {upgradeReady && (
+                          <button
+                            type="submit"
+                            className="submit-button action-button-upgrade"
+                            onClick={() => { setAction('upgrade'); selectedTab('upgrade') }}
+                          >
+                            <Check size={15} /> Confirm upgrade to 3x
+                          </button>
+                        )}
+                      </>
+                    )}
+                    {is2x && (
+                      <p className="form-hint">Plan 2x is final — it cannot be upgraded to 2.5x or 3x.</p>
+                    )}
+                    {is3x && (
+                      <p className="form-hint">You are already on the highest tier (3x). No further upgrades available.</p>
+                    )}
+                  </div>
+                </>
+              )}
+              <p className="terms-note"><CircleHelp size={13} /> Plan upgrades are automatic when the direct threshold is met. 2x is final.</p>
+            </section>
+
             <section className="data-section chart-section reveal-on-scroll">
               <div className="section-heading">
                 <div>

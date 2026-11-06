@@ -1122,6 +1122,103 @@
   .level-summary { grid-template-columns: 1fr; }
 }
 
+/* --- Plan Upgrade Progress --- */
+.upgrade-progress-section { padding-bottom: 14px; }
+.upgrade-progress-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: #121F19;
+}
+.upgrade-progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.upgrade-plan-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.upgrade-plan-name {
+  color: var(--ink);
+  font: 700 1.1rem var(--display);
+  letter-spacing: -0.01em;
+}
+.upgrade-plan-status {
+  color: var(--muted);
+  font: 500 0.72rem var(--mono);
+  letter-spacing: 0.04em;
+}
+.upgrade-check-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.30);
+  color: #34d399;
+  font: 700 0.72rem var(--mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.upgrade-progress-bar-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.upgrade-progress-bar {
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #080E0B;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+.upgrade-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #059669, #34d399);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.35);
+  transition: width 0.6s ease;
+}
+.upgrade-progress-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  color: var(--secondary);
+  font: 500 0.72rem var(--mono);
+}
+.upgrade-progress-details {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.upgrade-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--line);
+}
+.upgrade-detail-label {
+  color: var(--muted);
+  font: 500 0.62rem var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.upgrade-detail-value {
+  color: var(--ink);
+  font: 700 0.9rem var(--mono);
+}
+
 /* --- Member Since --- */
 .member-since {
   display: inline-flex;
