@@ -92,6 +92,15 @@ type ContractTerms = {
 }
 
 type Action = 'register' | 'invest' | 'withdraw' | 'reinvest' | 'upgrade'
+
+type TxRecord = {
+  type: Action
+  hash: `0x${string}`
+  amount: string
+  token: string
+  timestamp: number
+}
+
 const ZERO_REFERRER = '0x0000000000000000000000000000000000000000' as Address
 
 const publicClient = createPublicClient({ chain: bsc, transport: http() })
@@ -209,9 +218,21 @@ function App() {
   const [copiedAddress, setCopiedAddress] = useState(false)
   const [withdrawCooldownRemaining, setWithdrawCooldownRemaining] = useState(0)
   const [timelineTab, setTimelineTab] = useState<'positions' | 'events'>('positions')
+  const [txHistory, setTxHistory] = useState<TxRecord[]>(() => {
+    try {
+      const saved = localStorage.getItem('dexmitra-tx-history')
+      return saved ? JSON.parse(saved) : []
+    } catch {
+      return []
+    }
+  })
   useEffect(() => {
     localStorage.setItem('dexmitra-token', tokenAddress)
   }, [tokenAddress])
+
+  useEffect(() => {
+    localStorage.setItem('dexmitra-tx-history', JSON.stringify(txHistory))
+  }, [txHistory])
 
   useEffect(() => {
     let active = true
@@ -522,6 +543,15 @@ function App() {
       await publicClient.waitForTransactionReceipt({ hash })
       setNotice('Transaction confirmed.')
       setAmount('')
+      // Log transaction to history
+      const record: TxRecord = {
+        type: action,
+        hash,
+        amount: amount || (action === 'register' ? terms?.registrationFee?.toString() ?? '' : ''),
+        token: action === 'reinvest' ? 'units' : tokenSymbol,
+        timestamp: Date.now(),
+      }
+      setTxHistory((prev) => [record, ...prev].slice(0, 50))
       setRefreshVersion((version) => version + 1)
     } catch (actionError) {
       setError(readableError(actionError))
@@ -1128,6 +1158,46 @@ function App() {
                 </div>
               )}
               <p className="terms-note"><CircleHelp size={13} /> Timeline based on on-chain investment records. Dates are approximate.</p>
+            </section>
+
+            <section className="data-section tx-history-section">
+              <div className="section-heading">
+                <div>
+                  <p className="eyebrow">TRANSACTION HISTORY</p>
+                  <h2>Recent activity</h2>
+                </div>
+                {txHistory.length > 0 && <span className="count-pill">{txHistory.length} txs</span>}
+              </div>
+              {txHistory.length === 0 ? (
+                <div className="empty-state"><RefreshCw size={18} /><strong>No transactions yet</strong><span>Your completed transactions will appear here.</span></div>
+              ) : (
+                <div className="tx-history-list">
+                  {txHistory.map((tx, index) => (
+                    <div key={`${tx.hash}-${index}`} className="tx-history-item">
+                      <div className="tx-history-icon">
+                        {tx.type === 'register' && <Wallet size={14} />}
+                        {tx.type === 'invest' && <ArrowDownLeft size={14} />}
+                        {tx.type === 'withdraw' && <ArrowUpRight size={14} />}
+                        {tx.type === 'reinvest' && <RefreshCw size={14} />}
+                        {tx.type === 'upgrade' && <Check size={14} />}
+                      </div>
+                      <div className="tx-history-content">
+                        <div className="tx-history-header">
+                          <span className="tx-history-type">{tx.type === 'upgrade' ? 'Upgrade Plan' : tx.type.charAt(0).toUpperCase() + tx.type.slice(1)}</span>
+                          <span className="tx-history-date">{new Date(tx.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                        <div className="tx-history-details">
+                          {tx.amount && <span className="tx-history-amount">{tx.amount} {tx.token}</span>}
+                          <a href={`https://bscscan.com/tx/${tx.hash}`} target="_blank" rel="noreferrer" className="tx-history-hash">
+                            {tx.hash.slice(0, 10)}…{tx.hash.slice(-8)} <ExternalLink size={10} />
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p className="terms-note"><CircleHelp size={13} /> Transaction history is stored locally. Clearing browser data will reset this list.</p>
             </section>
 
             <section className="data-section referral-section">

@@ -1463,6 +1463,83 @@
   .timeline-footer { flex-direction: column; gap: 4px; }
 }
 
+/* --- Transaction History --- */
+.tx-history-section { padding-bottom: 14px; }
+.tx-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+.tx-history-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #121F19;
+  transition: all 0.2s ease;
+}
+.tx-history-item:hover {
+  border-color: var(--line-strong);
+  background: #152520;
+}
+.tx-history-icon {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(16, 185, 129, 0.10);
+  border: 1px solid rgba(16, 185, 129, 0.20);
+  color: #34d399;
+}
+.tx-history-content {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tx-history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.tx-history-type {
+  color: var(--ink);
+  font: 700 0.8rem var(--display);
+  text-transform: capitalize;
+}
+.tx-history-date {
+  color: var(--muted);
+  font: 500 0.65rem var(--mono);
+}
+.tx-history-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.tx-history-amount {
+  color: var(--secondary);
+  font: 500 0.75rem var(--mono);
+}
+.tx-history-hash {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--brand);
+  font: 500 0.7rem var(--mono);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.tx-history-hash:hover { color: #34d399; }
+
 /* --- Member Since --- */
 .member-since {
   display: inline-flex;
