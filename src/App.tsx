@@ -875,6 +875,13 @@ function App() {
                   })}
                 </div>
               )}
+              {investments.length > 1 && (
+                <div className="positions-swipe-dots">
+                  {investments.map((_, i) => (
+                    <span key={i} className="positions-swipe-dot" />
+                  ))}
+                </div>
+              )}
             </section>
 
             <section className="data-section terms-section reveal-on-scroll">

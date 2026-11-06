@@ -555,6 +555,43 @@
   display: grid;
   gap: 16px;
 }
+
+/* Swipeable position cards on mobile */
+@media (max-width: 640px) {
+  .positions-grid {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 12px;
+    padding-bottom: 12px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .positions-grid::-webkit-scrollbar { display: none; }
+  .positions-grid .position-card {
+    flex: 0 0 85%;
+    scroll-snap-align: center;
+    min-width: 0;
+  }
+  .positions-swipe-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .positions-swipe-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    transition: all 0.2s ease;
+  }
+  .positions-swipe-dot.active {
+    width: 18px;
+    border-radius: 3px;
+    background: #10b981;
+  }
+}
 .position-card {
   position: relative;
   display: flex;
