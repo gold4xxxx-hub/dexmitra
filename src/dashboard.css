@@ -1003,6 +1003,125 @@
   100% { background-position: -200% 0; }
 }
 
+/* --- Level Business Panel --- */
+.levels-section { padding-bottom: 14px; }
+.levels-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+.level-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #121F19;
+  transition: all 0.2s ease;
+}
+.level-row:hover {
+  border-color: var(--line-strong);
+  background: #152520;
+}
+.level-badge {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(16, 185, 129, 0.10);
+  border: 1px solid rgba(16, 185, 129, 0.20);
+  color: #34d399;
+  font: 700 0.75rem var(--mono);
+  letter-spacing: 0.04em;
+}
+.level-info {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.level-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.level-bar-track {
+  flex: 1 1 auto;
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #080E0B;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+.level-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #059669, #34d399);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
+  transition: width 0.5s ease;
+}
+.level-pct {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font: 500 0.68rem var(--mono);
+  min-width: 42px;
+  text-align: right;
+}
+.level-stats {
+  display: flex;
+  gap: 16px;
+  font-size: 10px;
+  font-family: var(--mono);
+}
+.level-stat {
+  color: var(--secondary);
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.level-stat-label {
+  color: var(--muted);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.level-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.level-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--line);
+}
+.level-summary-label {
+  color: var(--muted);
+  font: 500 0.65rem var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.level-summary-value {
+  color: var(--ink);
+  font: 700 0.95rem var(--mono);
+}
+@media (max-width: 640px) {
+  .level-stats { flex-direction: column; gap: 2px; }
+  .level-summary { grid-template-columns: 1fr; }
+}
+
 /* --- Member Since --- */
 .member-since {
   display: inline-flex;

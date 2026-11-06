@@ -174,6 +174,9 @@ function App() {
   const [tokenAllowed, setTokenAllowed] = useState<boolean | null>(null)
   const [contractUsdtBalance, setContractUsdtBalance] = useState<bigint | null>(null)
   const [contractGcBalance, setContractGcBalance] = useState<bigint | null>(null)
+  const [levelBusiness, setLevelBusiness] = useState<bigint[]>([])
+  const [levelEarned, setLevelEarned] = useState<bigint[]>([])
+  const [levelPercentages, setLevelPercentages] = useState<bigint[]>([])
   const [action, setAction] = useState<Action>('register')
   const [amount, setAmount] = useState('')
   const [referrer, setReferrer] = useState('')
@@ -290,6 +293,39 @@ function App() {
     void load()
     return () => { active = false }
   }, [refreshVersion])
+
+  useEffect(() => {
+    if (!account) {
+      const timer = setTimeout(() => {
+        setLevelBusiness([])
+        setLevelEarned([])
+        setLevelPercentages([])
+      }, 0)
+      return () => clearTimeout(timer)
+    }
+    let active = true
+    const load = async () => {
+      try {
+        const [business, earned, pcts] = await Promise.all([
+          publicClient.readContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'getLevelBusiness', args: [account] }),
+          publicClient.readContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'getLevelEarned', args: [account] }),
+          publicClient.readContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'getLevelPercentages' }),
+        ])
+        if (!active) return
+        setLevelBusiness(Array.from(business as unknown as bigint[]))
+        setLevelEarned(Array.from(earned as unknown as bigint[]))
+        setLevelPercentages(Array.from(pcts as unknown as bigint[]))
+      } catch {
+        if (active) {
+          setLevelBusiness([])
+          setLevelEarned([])
+          setLevelPercentages([])
+        }
+      }
+    }
+    void load()
+    return () => { active = false }
+  }, [account, refreshVersion])
 
   useEffect(() => {
     const provider = window.ethereum
@@ -760,6 +796,65 @@ function App() {
                 )
               )}
               <p className="terms-note"><CircleHelp size={13} /> Analytics based on on-chain contract data. Not a guarantee of future returns.</p>
+            </section>
+
+            <section className="data-section levels-section">
+              <div className="section-heading">
+                <div>
+                  <p className="eyebrow">DOWNLINE NETWORK</p>
+                  <h2>Level business</h2>
+                </div>
+                <span className="live-read"><span /> Live</span>
+              </div>
+              {!account ? (
+                <div className="empty-state"><Wallet size={18} /><strong>Connect a wallet to view level data</strong><span>Level business and income data is read directly from the contract.</span></div>
+              ) : levelBusiness.length === 0 ? (
+                <div className="empty-state"><LoaderCircle className="spin" size={18} /><span>Loading level data…</span></div>
+              ) : (
+                <>
+                  <div className="levels-grid">
+                    {Array.from({ length: 15 }, (_, i) => i + 1).map((level) => {
+                      const business = levelBusiness[level] ?? 0n
+                      const earned = levelEarned[level] ?? 0n
+                      const pct = levelPercentages[level] ?? 0n
+                      const maxBusiness = Math.max(...levelBusiness.slice(1).map(Number), 1)
+                      const barWidth = business > 0n ? Math.max(4, Math.round((Number(business) / maxBusiness) * 100)) : 0
+                      return (
+                        <div key={level} className="level-row">
+                          <div className="level-badge">L{level}</div>
+                          <div className="level-info">
+                            <div className="level-bar-row">
+                              <div className="level-bar-track">
+                                <div className="level-bar-fill" style={{ width: barWidth + '%' }} />
+                              </div>
+                              <span className="level-pct">{(Number(pct) / 100).toFixed(2)}%</span>
+                            </div>
+                            <div className="level-stats">
+                              <span className="level-stat"><span className="level-stat-label">Business</span> {prettyAmount(business, unitDecimals)}</span>
+                              <span className="level-stat"><span className="level-stat-label">Earned</span> {prettyAmount(earned, unitDecimals)}</span>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <div className="level-summary">
+                    <div className="level-summary-item">
+                      <span className="level-summary-label">Total Level Business</span>
+                      <span className="level-summary-value">{prettyAmount(levelBusiness.slice(1).reduce((a, b) => a + b, 0n), unitDecimals)}</span>
+                    </div>
+                    <div className="level-summary-item">
+                      <span className="level-summary-label">Total Level Earned</span>
+                      <span className="level-summary-value">{prettyAmount(levelEarned.slice(1).reduce((a, b) => a + b, 0n), unitDecimals)}</span>
+                    </div>
+                    <div className="level-summary-item">
+                      <span className="level-summary-label">Direct Count</span>
+                      <span className="level-summary-value">{summary?.directCount?.toString() ?? '0'}</span>
+                    </div>
+                  </div>
+                </>
+              )}
+              <p className="terms-note"><CircleHelp size={13} /> Level income pays % of downline ROI. Level N requires N direct referrals. Max 20 tokens/level/day.</p>
             </section>
 
             <section className="data-section referral-section">
