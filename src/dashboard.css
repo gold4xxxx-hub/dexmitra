@@ -12,6 +12,40 @@
     radial-gradient(ellipse 80% 40% at 50% -10%, rgba(16, 185, 129, 0.14), transparent);
 }
 
+/* --- Scroll Reveal Animation --- */
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: opacity, transform;
+}
+
+.reveal-on-scroll.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger children within grids */
+.positions-grid .reveal-on-scroll:nth-child(2) { transition-delay: 0.1s; }
+.positions-grid .reveal-on-scroll:nth-child(3) { transition-delay: 0.2s; }
+.positions-grid .reveal-on-scroll:nth-child(4) { transition-delay: 0.3s; }
+
+.tiers-grid .reveal-on-scroll:nth-child(2) { transition-delay: 0.1s; }
+.tiers-grid .reveal-on-scroll:nth-child(3) { transition-delay: 0.2s; }
+
+.metrics .reveal-on-scroll:nth-child(2) { transition-delay: 0.1s; }
+.metrics .reveal-on-scroll:nth-child(3) { transition-delay: 0.2s; }
+.metrics .reveal-on-scroll:nth-child(4) { transition-delay: 0.3s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-on-scroll {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
 /* --- Top Navigation Bar --- */
 .topbar {
   height: 72px;

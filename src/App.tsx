@@ -296,6 +296,34 @@ function App() {
     return () => provider.removeListener?.('accountsChanged', handleAccounts)
   }, [])
 
+  // Scroll-reveal: observe all .reveal-on-scroll elements
+  useEffect(() => {
+    if (loading) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible')
+            observer.unobserve(entry.target)
+          }
+        })
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -30px 0px' }
+    )
+    const timer = setTimeout(() => {
+      const targets = document.querySelectorAll('.reveal-on-scroll:not(.is-visible)')
+      targets.forEach((el) => {
+        const rect = el.getBoundingClientRect()
+        if (rect.top < window.innerHeight + 200 && rect.bottom > -200) {
+          el.classList.add('is-visible')
+        } else {
+          observer.observe(el)
+        }
+      })
+    }, 500)
+    return () => { clearTimeout(timer); observer.disconnect() }
+  }, [loading, investments.length])
+
   async function connectWallet() {
     setError('')
     try {
@@ -450,7 +478,7 @@ function App() {
           </button>
         </div>
 
-        <section className="contract-strip" aria-label="Contract address">
+        <section className="contract-strip reveal-on-scroll" aria-label="Contract address">
           <span className="contract-label">Contract</span>
           <code>{CONTRACT_ADDRESS}</code>
           <a href={`https://bscscan.com/address/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer" aria-label="Open contract on BscScan"><ExternalLink size={13} /></a>
@@ -469,22 +497,22 @@ function App() {
         {notice && <div className="feedback success-feedback" role="status"><Check size={16} /><span>{notice} {txHash && <a href={`https://bscscan.com/tx/${txHash}`} target="_blank" rel="noreferrer">View transaction <ExternalLink size={12} /></a>}</span></div>}
 
         <section className="metrics" aria-label="Account summary">
-          <article className="metric metric-primary">
+          <article className="metric metric-primary reveal-on-scroll">
             <div className="metric-label">TOTAL INVESTED <span title="Value reported by the contract."><CircleHelp size={12} aria-label="Value reported by the contract" /></span></div>
             <div className="metric-value">{loading ? '—' : <Counter target={summary?.totalInvested ?? 0n} decimals={unitDecimals} />}<small>units</small></div>
             <div className="metric-foot">Lifetime deposits</div>
           </article>
-          <article className="metric">
+          <article className="metric reveal-on-scroll">
             <div className="metric-label">ACTIVE PRINCIPAL</div>
             <div className="metric-value">{loading ? '—' : <Counter target={summary?.activeInvested ?? 0n} decimals={unitDecimals} />}<small>units</small></div>
             <div className="metric-foot">Currently active</div>
           </article>
-          <article className="metric metric-earn">
+          <article className="metric metric-earn reveal-on-scroll">
             <div className="metric-label">WITHDRAWABLE</div>
             <div className="metric-value">{loading ? '—' : <Counter target={summary?.withdrawable ?? 0n} decimals={unitDecimals} />}<small>units</small></div>
             <div className="metric-foot">Contract-reported balance</div>
           </article>
-          <article className="metric metric-earn">
+          <article className="metric metric-earn reveal-on-scroll">
             <div className="metric-label">PENDING ROI</div>
             <div className="metric-value">{loading ? '—' : <Counter target={summary?.pendingRoi ?? 0n} decimals={unitDecimals} />}<small>units</small></div>
             <div className="metric-foot">Not a guaranteed return</div>
@@ -493,7 +521,7 @@ function App() {
 
         <div className="workspace-grid">
           <div className="left-column">
-            <section className="data-section positions-section">
+            <section className="data-section positions-section reveal-on-scroll">
               <div className="section-heading">
                 <div>
                   <p className="eyebrow">PORTFOLIO</p>
@@ -513,7 +541,7 @@ function App() {
                     const earnedTotal = item.earned + item.otherEarned
                     const capPct = item.cap > 0n ? Math.min(100, Math.round((Number(earnedTotal) / Number(item.cap)) * 100)) : 0
                     return (
-                      <div key={`${item.startedAt}-${index}`} className="position-card">
+                      <div key={`${item.startedAt}-${index}`} className={`position-card reveal-on-scroll ${!item.active ? 'is-closed' : ''}`}>
                         <div className="position-header">
                           <div className="position-id-row">
                             <span className="position-badge">#{investments.length - index}</span>
@@ -551,7 +579,7 @@ function App() {
               )}
             </section>
 
-            <section className="data-section terms-section">
+            <section className="data-section terms-section reveal-on-scroll">
               <div className="section-heading">
                 <div>
                   <p className="eyebrow">READ FROM CONTRACT</p>
@@ -561,7 +589,7 @@ function App() {
               </div>
               <div className="tiers-grid">
                 {planRows.map((planId) => (
-                  <div key={planId} className={`tier-card ${is3x && planId === 2 ? 'is-current' : ''}`}>
+                  <div key={planId} className={`tier-card reveal-on-scroll ${is3x && planId === 2 ? 'is-current' : ''}`}>
                     <div className="tier-header">
                       <span className="plan-name-badge">PLAN {planNames[planId]}</span>
                       <span className="directs-pill">Directs required: {terms ? String(terms.minDirects[planId]) : '—'}</span>
@@ -596,7 +624,7 @@ function App() {
             </section>
           </div>
 
-          <aside className="action-panel">
+          <aside className="action-panel reveal-on-scroll">
             <div className="section-content">
               <div className="action-heading">
                 <div>
@@ -686,7 +714,7 @@ function App() {
           </aside>
         </div>
 
-        <footer className="page-footer">
+        <footer className="page-footer reveal-on-scroll">
           <span><span className="footer-status" /> Reading from BNB Smart Chain</span>
           <span>Contract values are provided as-is; verify them on <a href={`https://bscscan.com/address/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer">BscScan <ExternalLink size={11} /></a></span>
         </footer>
