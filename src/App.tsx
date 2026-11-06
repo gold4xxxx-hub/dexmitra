@@ -1049,6 +1049,85 @@ function App() {
               <p className="terms-note"><CircleHelp size={13} /> Level income pays % of downline ROI. Level N requires N direct referrals. Max 20 tokens/level/day.</p>
             </section>
 
+            <section className="data-section cap-gauge-section">
+              <div className="section-heading">
+                <div>
+                  <p className="eyebrow">CAP UTILIZATION</p>
+                  <h2>Earnings progress</h2>
+                </div>
+                <span className="live-read"><span /> Live</span>
+              </div>
+              {!account ? (
+                <div className="empty-state"><Wallet size={18} /><strong>Connect a wallet to view cap progress</strong><span>Your earnings progress will appear here.</span></div>
+              ) : loading ? (
+                <div className="empty-state"><LoaderCircle className="spin" size={18} /><span>Loading…</span></div>
+              ) : !terms ? (
+                <div className="empty-state"><CircleHelp size={18} /><strong>Plan data unavailable</strong><span>Contract terms could not be loaded.</span></div>
+              ) : (
+                <>
+                  <div className="cap-gauge-wrap">
+                    <svg viewBox="0 0 200 200" className="cap-gauge">
+                      {(() => {
+                        const cap = Number(summary?.incomeCap ?? 0n)
+                        const earned = Number(summary?.capEarned ?? 0n)
+                        const pct = cap > 0 ? Math.min(100, Math.round((earned / cap) * 100)) : 0
+                        const color = pct < 50 ? '#10b981' : pct < 80 ? '#f59e0b' : '#ef4444'
+                        const r = 70
+                        const circumference = 2 * Math.PI * r
+                        const dash = (pct / 100) * circumference
+                        const gap = circumference - dash
+                        return (
+                          <>
+                            <circle cx="100" cy="100" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="18" />
+                            <circle
+                              cx="100" cy="100" r={r}
+                              fill="none"
+                              stroke={color}
+                              strokeWidth="18"
+                              strokeDasharray={`${dash} ${gap}`}
+                              transform="rotate(-90 100 100)"
+                              strokeLinecap="round"
+                              style={{ filter: `drop-shadow(0 0 8px ${color}40)` }}
+                            />
+                            <text x="100" y="90" textAnchor="middle" className="cap-gauge-pct" style={{ fill: color }}>{pct}%</text>
+                            <text x="100" y="110" textAnchor="middle" className="cap-gauge-label">Utilized</text>
+                          </>
+                        )
+                      })()}
+                    </svg>
+                    <div className="cap-gauge-legend">
+                      <div className="cap-gauge-stat">
+                        <span className="cap-gauge-stat-label">Income Cap</span>
+                        <span className="cap-gauge-stat-value">{prettyAmount(summary?.incomeCap, unitDecimals)}</span>
+                      </div>
+                      <div className="cap-gauge-stat">
+                        <span className="cap-gauge-stat-label">Earned</span>
+                        <span className="cap-gauge-stat-value">{prettyAmount(summary?.capEarned, unitDecimals)}</span>
+                      </div>
+                      <div className="cap-gauge-stat">
+                        <span className="cap-gauge-stat-label">Remaining</span>
+                        <span className="cap-gauge-stat-value">{prettyAmount(summary?.remainingToEarn, unitDecimals)}</span>
+                      </div>
+                      <div className="cap-gauge-stat">
+                        <span className="cap-gauge-stat-label">Active Positions</span>
+                        <span className="cap-gauge-stat-value">{summary?.activeInvestments?.toString() ?? '0'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="cap-gauge-bar">
+                    <div className="cap-gauge-bar-track">
+                      <div className="cap-gauge-bar-fill" style={{ width: (summary?.incomeCap && summary.incomeCap > 0n ? Math.min(100, Math.round((Number(summary.capEarned) / Number(summary.incomeCap)) * 100)) : 0) + '%' }} />
+                    </div>
+                    <div className="cap-gauge-bar-labels">
+                      <span>0</span>
+                      <span>{prettyAmount(summary?.incomeCap, unitDecimals)} units cap</span>
+                    </div>
+                  </div>
+                </>
+              )}
+              <p className="terms-note"><CircleHelp size={13} /> Cap utilization shows how much of your income cap has been earned. Green = healthy, amber = approaching, red = near cap.</p>
+            </section>
+
             <section className="data-section timeline-section">
               <div className="section-heading">
                 <div>

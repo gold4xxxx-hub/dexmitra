@@ -1540,6 +1540,90 @@
 }
 .tx-history-hash:hover { color: #34d399; }
 
+/* --- Cap Utilization Gauge --- */
+.cap-gauge-section { padding-bottom: 14px; }
+.cap-gauge-wrap {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 14px;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: #121F19;
+}
+.cap-gauge {
+  width: 180px;
+  height: 180px;
+  flex: 0 0 auto;
+}
+.cap-gauge-pct {
+  font: 800 1.6rem var(--mono);
+  dominant-baseline: middle;
+}
+.cap-gauge-label {
+  fill: var(--muted);
+  font: 500 0.7rem var(--mono);
+  dominant-baseline: middle;
+}
+.cap-gauge-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-width: 160px;
+}
+.cap-gauge-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--line);
+}
+.cap-gauge-stat-label {
+  color: var(--muted);
+  font: 500 0.68rem var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.cap-gauge-stat-value {
+  color: var(--ink);
+  font: 700 0.9rem var(--mono);
+}
+.cap-gauge-bar {
+  margin-top: 16px;
+}
+.cap-gauge-bar-track {
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #080E0B;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+.cap-gauge-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #059669, #34d399);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.35);
+  transition: width 0.6s ease;
+}
+.cap-gauge-bar-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  color: var(--muted);
+  font: 500 0.65rem var(--mono);
+}
+@media (max-width: 640px) {
+  .cap-gauge-wrap { flex-direction: column; }
+  .cap-gauge-legend { width: 100%; }
+}
+
 /* --- Member Since --- */
 .member-since {
   display: inline-flex;
