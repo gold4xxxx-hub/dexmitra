@@ -180,7 +180,8 @@ function App() {
   const [notice, setNotice] = useState('')
   const [error, setError] = useState('')
   const [txHash, setTxHash] = useState('')
-
+  const [chartTab, setChartTab] = useState<'breakdown' | 'timeline'>('breakdown')
+  const [copiedLink, setCopiedLink] = useState(false)
   useEffect(() => {
     localStorage.setItem('dexmitra-token', tokenAddress)
   }, [tokenAddress])
@@ -622,6 +623,205 @@ function App() {
               </div>
               <p className="terms-note"><CircleHelp size={13} /> Rates and caps are contract parameters, not promises of payment.</p>
             </section>
+
+            <section className="data-section chart-section reveal-on-scroll">
+              <div className="section-heading">
+                <div>
+                  <p className="eyebrow">ANALYTICS</p>
+                  <h2>Earnings breakdown</h2>
+                </div>
+                <div className="chart-tabs">
+                  <button type="button" className={`chart-tab ${chartTab === 'breakdown' ? 'selected' : ''}`} onClick={() => setChartTab('breakdown')}>Breakdown</button>
+                  <button type="button" className={`chart-tab ${chartTab === 'timeline' ? 'selected' : ''}`} onClick={() => setChartTab('timeline')}>Timeline</button>
+                </div>
+              </div>
+              {!account ? (
+                <div className="empty-state"><Wallet size={18} /><strong>Connect a wallet to view analytics</strong><span>Earnings data is read directly from the contract.</span></div>
+              ) : loading ? (
+                <div className="empty-state"><LoaderCircle className="spin" size={18} /><span>Loading analytics…</span></div>
+              ) : (
+                chartTab === 'breakdown' ? (
+                  <div className="chart-breakdown">
+                    <div className="chart-donut-wrap">
+                      <svg viewBox="0 0 200 200" className="chart-donut">
+                        {(() => {
+                          const roi = Number(summary?.totalEarned ?? 0n) - Number(summary?.directEarned ?? 0n) - Number(summary?.levelEarned ?? 0n)
+                          const direct = Number(summary?.directEarned ?? 0n)
+                          const level = Number(summary?.levelEarned ?? 0n)
+                          const total = roi + direct + level
+                          if (total === 0) return <circle cx="100" cy="100" r="70" fill="none" stroke="var(--line)" strokeWidth="24" />
+                          const cx = 100, cy = 100, r = 70
+                          const circumference = 2 * Math.PI * r
+                          const segments = [
+                            { value: roi, color: '#10b981', label: 'ROI' },
+                            { value: direct, color: '#3b82f6', label: 'Direct' },
+                            { value: level, color: '#f59e0b', label: 'Level' },
+                          ].filter(s => s.value > 0)
+                          let offset = 0
+                          return segments.map((seg, i) => {
+                            const pct = seg.value / total
+                            const dash = pct * circumference
+                            const gap = circumference - dash
+                            const currentOffset = offset
+                            offset += dash
+                            return (
+                              <circle
+                                key={i}
+                                cx={cx} cy={cy} r={r}
+                                fill="none"
+                                stroke={seg.color}
+                                strokeWidth="24"
+                                strokeDasharray={`${dash} ${gap}`}
+                                strokeDashoffset={-currentOffset}
+                                transform="rotate(-90 100 100)"
+                                strokeLinecap="round"
+                              />
+                            )
+                          })
+                        })()}
+                        <text x="100" y="95" textAnchor="middle" className="chart-donut-center-value">{prettyAmount(summary?.totalEarned, unitDecimals)}</text>
+                        <text x="100" y="112" textAnchor="middle" className="chart-donut-center-label">Total Earned</text>
+                      </svg>
+                      <div className="chart-legend">
+                        <div className="chart-legend-item">
+                          <span className="chart-legend-dot" style={{ background: '#10b981' }} />
+                          <span className="chart-legend-label">ROI Income</span>
+                          <span className="chart-legend-value">{prettyAmount((summary?.totalEarned ?? 0n) - (summary?.directEarned ?? 0n) - (summary?.levelEarned ?? 0n), unitDecimals)}</span>
+                        </div>
+                        <div className="chart-legend-item">
+                          <span className="chart-legend-dot" style={{ background: '#3b82f6' }} />
+                          <span className="chart-legend-label">Direct Income</span>
+                          <span className="chart-legend-value">{prettyAmount(summary?.directEarned, unitDecimals)}</span>
+                        </div>
+                        <div className="chart-legend-item">
+                          <span className="chart-legend-dot" style={{ background: '#f59e0b' }} />
+                          <span className="chart-legend-label">Level Income</span>
+                          <span className="chart-legend-value">{prettyAmount(summary?.levelEarned, unitDecimals)}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="chart-stats-row">
+                      <div className="chart-stat">
+                        <span className="chart-stat-label">Total Earned</span>
+                        <span className="chart-stat-value">{prettyAmount(summary?.totalEarned, unitDecimals)}</span>
+                      </div>
+                      <div className="chart-stat">
+                        <span className="chart-stat-label">Withdrawable</span>
+                        <span className="chart-stat-value">{prettyAmount(summary?.withdrawable, unitDecimals)}</span>
+                      </div>
+                      <div className="chart-stat">
+                        <span className="chart-stat-label">Total Withdrawn</span>
+                        <span className="chart-stat-value">{prettyAmount(summary?.totalWithdrawn, unitDecimals)}</span>
+                      </div>
+                      <div className="chart-stat">
+                        <span className="chart-stat-label">Pending ROI</span>
+                        <span className="chart-stat-value">{prettyAmount(summary?.pendingRoi, unitDecimals)}</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="chart-timeline">
+                    {investments.length === 0 ? (
+                      <div className="empty-state"><ArrowDownLeft size={18} /><strong>No positions found</strong><span>Investments will appear here once made.</span></div>
+                    ) : (
+                      <div className="timeline-list">
+                        {investments.map((item, index) => {
+                          const earnedTotal = item.earned + item.otherEarned
+                          const capPct = item.cap > 0n ? Math.min(100, Math.round((Number(earnedTotal) / Number(item.cap)) * 100)) : 0
+                          return (
+                            <div key={`${item.startedAt}-${index}`} className="timeline-item">
+                              <div className="timeline-dot" />
+                              <div className="timeline-content">
+                                <div className="timeline-header">
+                                  <span className="timeline-position">Position #{investments.length - index}</span>
+                                  <span className="timeline-date">{new Date(Number(item.startedAt) * 1000).toLocaleDateString()}</span>
+                                </div>
+                                <div className="timeline-bar">
+                                  <div className="timeline-bar-fill" style={{ width: capPct + '%' }} />
+                                </div>
+                                <div className="timeline-stats">
+                                  <span>Principal: {prettyAmount(item.amount, unitDecimals)}</span>
+                                  <span>Earned: {prettyAmount(earnedTotal, unitDecimals)}</span>
+                                  <span>Cap: {prettyAmount(item.cap, unitDecimals)}</span>
+                                  <span className="timeline-pct">{capPct}%</span>
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )
+              )}
+              <p className="terms-note"><CircleHelp size={13} /> Analytics based on on-chain contract data. Not a guarantee of future returns.</p>
+            </section>
+
+            <section className="data-section referral-section">
+              <div className="section-heading">
+                <div>
+                  <p className="eyebrow">REFERRAL NETWORK</p>
+                  <h2>Invite & earn</h2>
+                </div>
+                <span className="live-read"><span /> Live</span>
+              </div>
+              {!account ? (
+                <div className="empty-state"><Wallet size={18} /><strong>Connect a wallet to view referral data</strong><span>Your referral link and stats will appear here.</span></div>
+              ) : (
+                <>
+                  <div className="referral-link-box">
+                    <div className="referral-link-label">Your referral link</div>
+                    <div className="referral-link-row">
+                      <code className="referral-link-url">https://dexmitra.com?ref={shortAddress(account)}</code>
+                      <button
+                        type="button"
+                        className={`referral-copy-btn ${copiedLink ? 'copied' : ''}`}
+                        onClick={() => {
+                          navigator.clipboard.writeText(`https://dexmitra.com?ref=${account}`).then(() => {
+                            setCopiedLink(true)
+                            setTimeout(() => setCopiedLink(false), 2000)
+                          }).catch(() => {})
+                        }}
+                      >
+                        {copiedLink ? <Check size={14} /> : <ExternalLink size={14} />}
+                        {copiedLink ? 'Copied!' : 'Copy'}
+                      </button>
+                    </div>
+                    <p className="form-hint">Share this link. When someone registers using your address as referrer, you earn 40 direct income + level bonuses.</p>
+                  </div>
+                  <div className="referral-stats-grid">
+                    <div className="referral-stat-card">
+                      <span className="referral-stat-label">Direct Referrals</span>
+                      <span className="referral-stat-value">{summary?.directCount ? summary.directCount.toString() : '0'}</span>
+                    </div>
+                    <div className="referral-stat-card">
+                      <span className="referral-stat-label">Direct Income</span>
+                      <span className="referral-stat-value">{prettyAmount(summary?.directEarned, unitDecimals)}</span>
+                    </div>
+                    <div className="referral-stat-card">
+                      <span className="referral-stat-label">Level Income</span>
+                      <span className="referral-stat-value">{prettyAmount(summary?.levelEarned, unitDecimals)}</span>
+                    </div>
+                    <div className="referral-stat-card">
+                      <span className="referral-stat-label">Total Earned</span>
+                      <span className="referral-stat-value">{prettyAmount(summary?.totalEarned, unitDecimals)}</span>
+                    </div>
+                  </div>
+                  {summary && summary.directCount > 0n && (
+                    <div className="referral-tier-info">
+                      <CircleHelp size={13} />
+                      <span>
+                        {Number(summary.directCount) >= 10
+                          ? 'You have 10+ directs — eligible for 3x auto-upgrade!'
+                          : `You have ${summary.directCount.toString()} direct(s). Need 10 directs for 2.5x → 3x auto-upgrade.`}
+                      </span>
+                    </div>
+                  )}
+                </>
+              )}
+              <p className="terms-note"><CircleHelp size={13} /> Referral rewards are contract parameters, not promises of payment.</p>
+            </section>
+
           </div>
 
           <aside className="action-panel reveal-on-scroll">

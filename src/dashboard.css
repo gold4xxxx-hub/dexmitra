@@ -704,6 +704,290 @@
 }
 .terms-note svg { flex: 0 0 auto; color: var(--brand); margin-top: 1px; }
 
+/* --- Earnings Chart --- */
+.chart-section { padding-bottom: 14px; }
+.chart-tabs {
+  display: flex;
+  gap: 4px;
+  background: #080E0B;
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.07);
+}
+.chart-tab {
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--secondary);
+  font: 500 0.75rem var(--display);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.chart-tab:hover { color: var(--ink); }
+.chart-tab.selected {
+  background: #10B981;
+  color: #04160E;
+  font-weight: 700;
+}
+.chart-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.chart-donut-wrap {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.chart-donut {
+  width: 180px;
+  height: 180px;
+  flex: 0 0 auto;
+}
+.chart-donut-center-value {
+  fill: var(--ink);
+  font: 700 1.1rem var(--mono);
+  dominant-baseline: middle;
+}
+.chart-donut-center-label {
+  fill: var(--muted);
+  font: 500 0.65rem var(--mono);
+  dominant-baseline: middle;
+}
+.chart-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1 1 auto;
+}
+.chart-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+.chart-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+.chart-legend-label {
+  color: var(--secondary);
+  font-weight: 500;
+  flex: 1 1 auto;
+}
+.chart-legend-value {
+  color: var(--ink);
+  font: 700 0.85rem var(--mono);
+}
+.chart-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.chart-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--line);
+}
+.chart-stat-label {
+  color: var(--muted);
+  font: 500 0.65rem var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.chart-stat-value {
+  color: var(--ink);
+  font: 700 0.95rem var(--mono);
+}
+.chart-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.timeline-list { display: flex; flex-direction: column; gap: 12px; }
+.timeline-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.timeline-dot {
+  flex: 0 0 auto;
+  width: 12px;
+  height: 12px;
+  margin-top: 4px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+.timeline-content {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #121F19;
+}
+.timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.timeline-position {
+  color: var(--ink);
+  font: 700 0.8rem var(--display);
+}
+.timeline-date {
+  color: var(--muted);
+  font: 500 0.7rem var(--mono);
+}
+.timeline-bar {
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #080E0B;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+.timeline-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #059669, #34d399);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
+}
+.timeline-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  font-size: 10px;
+  color: var(--secondary);
+  font-family: var(--mono);
+}
+.timeline-pct {
+  color: #34d399;
+  font-weight: 700;
+}
+@media (max-width: 640px) {
+  .chart-stats-row { grid-template-columns: repeat(2, 1fr); }
+  .chart-donut-wrap { flex-direction: column; }
+}
+
+/* --- Referral Network --- */
+.referral-section { padding-bottom: 14px; }
+.referral-link-box {
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--receipt-border);
+  background: var(--receipt-bg);
+  margin-bottom: 14px;
+}
+.referral-link-label {
+  color: var(--muted);
+  font: 500 0.68rem var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.referral-link-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.referral-link-url {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #080E0B;
+  color: var(--ink);
+  font: 500 0.75rem var(--mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.referral-copy-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--brand);
+  background: var(--brand);
+  color: #04160E;
+  font: 700 0.8rem var(--display);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.referral-copy-btn:hover {
+  background: #34d399;
+  border-color: #34d399;
+}
+.referral-copy-btn.copied {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: var(--brand-border);
+  color: #34d399;
+}
+.referral-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+.referral-stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #121F19;
+}
+.referral-stat-label {
+  color: var(--muted);
+  font: 500 0.68rem var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.referral-stat-value {
+  color: var(--ink);
+  font: 700 1.1rem var(--mono);
+}
+.referral-tier-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--receipt-border);
+  background: var(--receipt-bg);
+  color: var(--secondary);
+  font-size: 11px;
+  line-height: 1.5;
+}
+.referral-tier-info svg { flex: 0 0 auto; margin-top: 1px; color: var(--brand); }
+@media (max-width: 640px) {
+  .referral-link-row { flex-direction: column; }
+  .referral-copy-btn { width: 100%; justify-content: center; }
+  .referral-stats-grid { grid-template-columns: 1fr; }
+}
+
 /* --- Member Since --- */
 .member-since {
   display: inline-flex;
