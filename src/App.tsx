@@ -193,6 +193,22 @@ function Counter({ target, decimals }: CounterProps) {
   return <span className="tabular-nums">{formatCounter(displayValue, decimals)}</span>
 }
 
+/* Empty state component with icon, title, description, and optional CTA */
+function EmptyState({ icon, title, description, cta, onCta }: { icon: React.ReactNode; title: string; description: string; cta?: string; onCta?: () => void }) {
+  return (
+    <div className="empty-state">
+      <div className="empty-state-icon">{icon}</div>
+      <strong>{title}</strong>
+      <span>{description}</span>
+      {cta && onCta && (
+        <button type="button" className="empty-state-cta" onClick={onCta}>
+          {cta}
+        </button>
+      )}
+    </div>
+  )
+}
+
 /* Skeleton loader for metric values */
 function Skeleton({ width = 80 }: { width?: number }) {
   return <span className="skeleton" style={{ width: `${width}px` }} />
@@ -786,11 +802,11 @@ function App() {
                 <span className="count-pill">{investments.filter((item) => item.active).length} active</span>
               </div>
               {!account ? (
-                <div className="empty-state"><Wallet size={18} /><strong>Connect a wallet to view positions</strong><span>Your account data is read directly from the contract.</span></div>
+                <EmptyState icon={<Wallet size={24} />} title="Connect a wallet" description="Your investment positions will appear here once you connect." cta="Connect wallet" onCta={() => void connectWallet()} />
               ) : loading ? (
                 <div className="empty-state"><LoaderCircle className="spin" size={18} /><span>Loading on-chain positions…</span></div>
               ) : investments.length === 0 ? (
-                <div className="empty-state"><ArrowDownLeft size={18} /><strong>No positions found</strong><span>This wallet has no investment records in the contract.</span></div>
+                <EmptyState icon={<ArrowDownLeft size={24} />} title="No positions yet" description="This wallet has no investment records in the contract." cta="Make your first investment" onCta={() => selectedTab('invest')} />
               ) : (
                 <div className="positions-grid">
                   {investments.map((item, index) => {
@@ -967,7 +983,7 @@ function App() {
                 </div>
               </div>
               {!account ? (
-                <div className="empty-state"><Wallet size={18} /><strong>Connect a wallet to view analytics</strong><span>Earnings data is read directly from the contract.</span></div>
+                <EmptyState icon={<Wallet size={24} />} title="Connect a wallet" description="Earnings analytics will appear here once you connect." cta="Connect wallet" onCta={() => void connectWallet()} />
               ) : loading ? (
                 <div className="empty-state"><LoaderCircle className="spin" size={18} /><span>Loading analytics…</span></div>
               ) : (
@@ -1097,7 +1113,7 @@ function App() {
                 <span className="live-read"><span /> Live</span>
               </div>
               {!account ? (
-                <div className="empty-state"><Wallet size={18} /><strong>Connect a wallet to view level data</strong><span>Level business and income data is read directly from the contract.</span></div>
+                <EmptyState icon={<Wallet size={24} />} title="Connect a wallet" description="Level business and income data will appear here once you connect." cta="Connect wallet" onCta={() => void connectWallet()} />
               ) : levelBusiness.length === 0 ? (
                 <div className="empty-state"><LoaderCircle className="spin" size={18} /><span>Loading level data…</span></div>
               ) : (
@@ -1156,7 +1172,7 @@ function App() {
                 <span className="live-read"><span /> Live</span>
               </div>
               {!account ? (
-                <div className="empty-state"><Wallet size={18} /><strong>Connect a wallet to view cap progress</strong><span>Your earnings progress will appear here.</span></div>
+                <EmptyState icon={<Wallet size={24} />} title="Connect a wallet" description="Your earnings progress will appear here once you connect." cta="Connect wallet" onCta={() => void connectWallet()} />
               ) : loading ? (
                 <div className="empty-state"><LoaderCircle className="spin" size={18} /><span>Loading…</span></div>
               ) : !terms ? (
@@ -1243,7 +1259,7 @@ function App() {
                 <div className="empty-state"><LoaderCircle className="spin" size={18} /><span>Loading timeline…</span></div>
               ) : timelineTab === 'positions' ? (
                 investments.length === 0 ? (
-                  <div className="empty-state"><ArrowDownLeft size={18} /><strong>No positions found</strong><span>Investments will appear here once made.</span></div>
+                  <EmptyState icon={<ArrowDownLeft size={24} />} title="No positions yet" description="Your investment positions will appear here once you invest." cta="Make your first investment" onCta={() => selectedTab('invest')} />
                 ) : (
                   <div className="timeline-list">
                     {investments.map((item, index) => {
@@ -1346,7 +1362,7 @@ function App() {
                 {txHistory.length > 0 && <span className="count-pill">{txHistory.length} txs</span>}
               </div>
               {txHistory.length === 0 ? (
-                <div className="empty-state"><RefreshCw size={18} /><strong>No transactions yet</strong><span>Your completed transactions will appear here.</span></div>
+                <EmptyState icon={<RefreshCw size={24} />} title="No transactions yet" description="Your completed transactions will appear here after your first action." />
               ) : (
                 <div className="tx-history-list">
                   {txHistory.map((tx, index) => (
@@ -1386,7 +1402,7 @@ function App() {
                 <span className="live-read"><span /> Live</span>
               </div>
               {!account ? (
-                <div className="empty-state"><Wallet size={18} /><strong>Connect a wallet to view referral data</strong><span>Your referral link and stats will appear here.</span></div>
+                <EmptyState icon={<Wallet size={24} />} title="Connect a wallet" description="Your referral link and stats will appear here once you connect." cta="Connect wallet" onCta={() => void connectWallet()} />
               ) : (
                 <>
                   <div className="referral-link-box">
