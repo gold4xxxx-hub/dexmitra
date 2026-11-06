@@ -188,6 +188,8 @@ function App() {
   const [tokenAllowed, setTokenAllowed] = useState<boolean | null>(null)
   const [contractUsdtBalance, setContractUsdtBalance] = useState<bigint | null>(null)
   const [contractGcBalance, setContractGcBalance] = useState<bigint | null>(null)
+  const [walletUsdtBalance, setWalletUsdtBalance] = useState<bigint | null>(null)
+  const [walletGcBalance, setWalletGcBalance] = useState<bigint | null>(null)
   const [levelBusiness, setLevelBusiness] = useState<bigint[]>([])
   const [levelEarned, setLevelEarned] = useState<bigint[]>([])
   const [levelPercentages, setLevelPercentages] = useState<bigint[]>([])
@@ -309,6 +311,39 @@ function App() {
     void load()
     return () => { active = false }
   }, [refreshVersion])
+
+  // Fetch wallet token balances when account changes
+  useEffect(() => {
+    if (!account) {
+      const timer = setTimeout(() => {
+        setWalletUsdtBalance(null)
+        setWalletGcBalance(null)
+      }, 0)
+      return () => clearTimeout(timer)
+    }
+    let active = true
+    const USDT_ADDR = '0x55d398326f99059ff775485246999027b3197955' as Address
+    const GC_ADDR = '0x5C0D286F3812Da7f6bd766b7AAdadC7059938de8' as Address
+    const balAbi = [{ type: 'function', name: 'balanceOf', stateMutability: 'view', inputs: [{ name: 'a', type: 'address' }], outputs: [{ name: '', type: 'uint256' }] }] as const
+    const load = async () => {
+      try {
+        const [usdt, gc] = await Promise.all([
+          publicClient.readContract({ address: USDT_ADDR, abi: balAbi, functionName: 'balanceOf', args: [account] }),
+          publicClient.readContract({ address: GC_ADDR, abi: balAbi, functionName: 'balanceOf', args: [account] }),
+        ])
+        if (!active) return
+        setWalletUsdtBalance(usdt as unknown as bigint)
+        setWalletGcBalance(gc as unknown as bigint)
+      } catch {
+        if (active) {
+          setWalletUsdtBalance(null)
+          setWalletGcBalance(null)
+        }
+      }
+    }
+    void load()
+    return () => { active = false }
+  }, [account, refreshVersion])
 
   useEffect(() => {
     if (!account) {
@@ -573,7 +608,8 @@ function App() {
             {copiedAddress ? 'Copied!' : 'Copy'}
           </button>
           <a href={`https://bscscan.com/address/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer" aria-label="Open contract on BscScan"><ExternalLink size={13} /></a>
-          <span className="contract-balance"><span className="contract-label">Balance</span> USDT {prettyAmount(contractUsdtBalance ?? undefined, 18)} · GC {prettyAmount(contractGcBalance ?? undefined, 6)}</span>
+          <span className="contract-balance"><span className="contract-label">Contract</span> USDT {prettyAmount(contractUsdtBalance ?? undefined, 18)} · GC {prettyAmount(contractGcBalance ?? undefined, 6)}</span>
+          {account && <span className="wallet-balance"><span className="contract-label">Your wallet</span> USDT {prettyAmount(walletUsdtBalance ?? undefined, 18)} · GC {prettyAmount(walletGcBalance ?? undefined, 6)}</span>}
           <span className={`status-chip ${terms?.paused ? 'is-paused' : 'is-live'}`}><span />{terms?.paused ? 'Paused' : 'Contract active'}</span>
         </section>
 
