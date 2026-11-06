@@ -208,6 +208,7 @@ function App() {
   const [copiedLink, setCopiedLink] = useState(false)
   const [copiedAddress, setCopiedAddress] = useState(false)
   const [withdrawCooldownRemaining, setWithdrawCooldownRemaining] = useState(0)
+  const [timelineTab, setTimelineTab] = useState<'positions' | 'events'>('positions')
   useEffect(() => {
     localStorage.setItem('dexmitra-token', tokenAddress)
   }, [tokenAddress])
@@ -1016,6 +1017,117 @@ function App() {
                 </>
               )}
               <p className="terms-note"><CircleHelp size={13} /> Level income pays % of downline ROI. Level N requires N direct referrals. Max 20 tokens/level/day.</p>
+            </section>
+
+            <section className="data-section timeline-section">
+              <div className="section-heading">
+                <div>
+                  <p className="eyebrow">PORTFOLIO TIMELINE</p>
+                  <h2>Investment timeline</h2>
+                </div>
+                <div className="chart-tabs">
+                  <button type="button" className={`chart-tab ${timelineTab === 'positions' ? 'selected' : ''}`} onClick={() => setTimelineTab('positions')}>Positions</button>
+                  <button type="button" className={`chart-tab ${timelineTab === 'events' ? 'selected' : ''}`} onClick={() => setTimelineTab('events')}>Events</button>
+                </div>
+              </div>
+              {!account ? (
+                <div className="empty-state"><Wallet size={18} /><strong>Connect a wallet to view timeline</strong><span>Your investment timeline will appear here.</span></div>
+              ) : loading ? (
+                <div className="empty-state"><LoaderCircle className="spin" size={18} /><span>Loading timeline…</span></div>
+              ) : timelineTab === 'positions' ? (
+                investments.length === 0 ? (
+                  <div className="empty-state"><ArrowDownLeft size={18} /><strong>No positions found</strong><span>Investments will appear here once made.</span></div>
+                ) : (
+                  <div className="timeline-list">
+                    {investments.map((item, index) => {
+                      const earnedTotal = item.earned + item.otherEarned
+                      const capPct = item.cap > 0n ? Math.min(100, Math.round((Number(earnedTotal) / Number(item.cap)) * 100)) : 0
+
+                      const estimatedDaysToCap = terms && terms.roiBps[Number(summary?.plan ?? 0)] > 0n
+                        ? Math.ceil(Number(item.cap - earnedTotal) / (Number(item.amount) * Number(terms.roiBps[Number(summary?.plan ?? 0)]) / 10000 / 30))
+                        : 0
+                      return (
+                        <div key={`${item.startedAt}-${index}`} className="timeline-item">
+                          <div className="timeline-dot-wrap">
+                            <div className={`timeline-dot ${item.active ? 'is-active' : 'is-closed'}`} />
+                            {index < investments.length - 1 && <div className="timeline-connector" />}
+                          </div>
+                          <div className="timeline-content">
+                            <div className="timeline-header">
+                              <span className="timeline-position">Position #{investments.length - index}</span>
+                              <span className="timeline-date">{new Date(Number(item.startedAt) * 1000).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                            </div>
+                            <div className="timeline-meta">
+                              <span className="timeline-meta-item">
+                                <span className="timeline-meta-label">Principal</span>
+                                <span className="timeline-meta-value">{prettyAmount(item.amount, unitDecimals)} units</span>
+                              </span>
+                              <span className="timeline-meta-item">
+                                <span className="timeline-meta-label">Earned</span>
+                                <span className="timeline-meta-value timeline-meta-earned">{prettyAmount(earnedTotal, unitDecimals)} units</span>
+                              </span>
+                              <span className="timeline-meta-item">
+                                <span className="timeline-meta-label">Cap</span>
+                                <span className="timeline-meta-value">{prettyAmount(item.cap, unitDecimals)} units</span>
+                              </span>
+                              <span className="timeline-meta-item">
+                                <span className="timeline-meta-label">Status</span>
+                                <span className={`timeline-status ${item.active ? 'is-active' : 'is-closed'}`}>{item.active ? 'Active' : 'Closed'}</span>
+                              </span>
+                            </div>
+                            <div className="timeline-bar">
+                              <div className="timeline-bar-fill" style={{ width: capPct + '%' }} />
+                            </div>
+                            <div className="timeline-footer">
+                              {item.active && estimatedDaysToCap > 0 && (
+                                <span className="timeline-footer-text">~{estimatedDaysToCap} days to cap</span>
+                              )}
+                              {item.reinvest && <span className="timeline-reinvest-badge">Reinvested</span>}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              ) : (
+                <div className="timeline-events">
+                  <div className="timeline-event">
+                    <div className="timeline-event-dot" />
+                    <div className="timeline-event-content">
+                      <span className="timeline-event-title">Account registered</span>
+                      <span className="timeline-event-date">{summary?.joinedAt ? new Date(Number(summary.joinedAt) * 1000).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '—'}</span>
+                    </div>
+                  </div>
+                  {investments.map((item, index) => (
+                    <div key={`event-${item.startedAt}-${index}`} className="timeline-event">
+                      <div className="timeline-event-dot" />
+                      <div className="timeline-event-content">
+                        <span className="timeline-event-title">{item.reinvest ? 'Reinvested' : 'Invested'} {prettyAmount(item.amount, unitDecimals)} units</span>
+                        <span className="timeline-event-date">{new Date(Number(item.startedAt) * 1000).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                      </div>
+                    </div>
+                  ))}
+                  {summary && summary.totalWithdrawn > 0n && (
+                    <div className="timeline-event">
+                      <div className="timeline-event-dot timeline-event-dot--withdraw" />
+                      <div className="timeline-event-content">
+                        <span className="timeline-event-title">Withdrew {prettyAmount(summary.totalWithdrawn, unitDecimals)} units total</span>
+                        <span className="timeline-event-date">{summary.lastWithdraw ? new Date(Number(summary.lastWithdraw) * 1000).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '—'}</span>
+                      </div>
+                    </div>
+                  )}
+                  {summary && summary.totalReinvested > 0n && (
+                    <div className="timeline-event">
+                      <div className="timeline-event-dot timeline-event-dot--reinvest" />
+                      <div className="timeline-event-content">
+                        <span className="timeline-event-title">Total reinvested: {prettyAmount(summary.totalReinvested, unitDecimals)} units (fees: {prettyAmount(summary.totalReinvestFees, unitDecimals)})</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              <p className="terms-note"><CircleHelp size={13} /> Timeline based on on-chain investment records. Dates are approximate.</p>
             </section>
 
             <section className="data-section referral-section">
