@@ -2138,43 +2138,6 @@
   .page-footer { padding-bottom: 80px; }
 }
 
-/* --- Collapsible Sections --- */
-.collapsible-heading {
-  cursor: pointer;
-  user-select: none;
-}
-.collapsible-heading:hover h2 {
-  color: #34d399;
-}
-.collapsible-controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.collapsible-chevron {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--line);
-  color: var(--secondary);
-  font-size: 0.7rem;
-  transition: all 0.2s ease;
-}
-.collapsible-chevron.collapsed {
-  transform: rotate(-90deg);
-  background: rgba(16, 185, 129, 0.10);
-  color: #34d399;
-  border-color: rgba(16, 185, 129, 0.25);
-}
-.collapsible-heading:hover .collapsible-chevron {
-  border-color: var(--line-strong);
-  color: var(--ink);
-}
-
 /* --- Member Since --- */
 .member-since {
   display: inline-flex;
