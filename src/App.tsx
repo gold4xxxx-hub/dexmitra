@@ -972,6 +972,10 @@ function App() {
                         <span className="tier-metric-label">MONTHLY RATE</span>
                         <span className="tier-metric-value tier-metric-value-earn">{terms ? (Number(terms.roiBps[planId]) / 100).toFixed(2) + '%' : '—'}</span>
                       </div>
+                      <div className="tier-metric">
+                        <span className="tier-metric-label">DAILY RATE</span>
+                        <span className="tier-metric-value">{terms ? (Number(terms.roiBps[planId]) / 3000).toFixed(4) + '%' : '—'}</span>
+                      </div>
                     </div>
                   </div>
                 ))}
