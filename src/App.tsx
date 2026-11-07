@@ -769,14 +769,14 @@ function App() {
   return (
     <div className="app-shell">
       <header className="topbar">
-        <button type="button" className="hamburger-btn" onClick={() => setMenuOpen(true)} aria-label="Open menu">
-          <Menu size={20} />
-        </button>
         <a className="brand" href="#top" aria-label="Dexmitra dashboard">
           <span className="brand-mark"><Landmark size={16} strokeWidth={2} /></span>
           <span>dexmitra<span className="brand-period">.</span></span>
         </a>
         <div className="topbar-right">
+          <button type="button" className="hamburger-btn" onClick={() => setMenuOpen(true)} aria-label="Open menu">
+            <Menu size={20} />
+          </button>
           <a className="network-pill" href="https://bscscan.com" target="_blank" rel="noreferrer">
             <span className="network-dot" /> BNB Chain <ExternalLink size={12} />
           </a>
