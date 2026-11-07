@@ -255,7 +255,6 @@ function App() {
   const [pullToRefreshState, setPullToRefreshState] = useState<'idle' | 'pulling' | 'refreshing'>('idle')
   const [pullDistance, setPullDistance] = useState(0)
   const [loadRetry, setLoadRetry] = useState(0)
-  const [gasPrice, setGasPrice] = useState<number | null>(null)
   const [toasts, setToasts] = useState<Toast[]>([])
   const [confirmModal, setConfirmModal] = useState<ConfirmModal | null>(null)
   const [txHistory, setTxHistory] = useState<TxRecord[]>(() => {
@@ -502,25 +501,6 @@ function App() {
       document.removeEventListener('touchend', handleTouchEnd)
     }
   }, [])
-
-  // Fetch BSC gas price every 30 seconds
-  useEffect(() => {
-    let active = true
-    const fetchGas = async () => {
-      try {
-        const raw = await publicClient.getGasPrice()
-        if (!active) return
-        // Convert from wei to gwei (1 gwei = 1e9 wei)
-        setGasPrice(Number(raw) / 1e9)
-      } catch {
-        // silently fail - gas price is non-critical
-      }
-    }
-    void fetchGas()
-    const interval = setInterval(fetchGas, 30000)
-    return () => { active = false; clearInterval(interval) }
-  }, [])
-
   // Withdrawal cooldown countdown ticker
   useEffect(() => {
     if (!summary?.nextWithdrawAt) {
@@ -800,11 +780,6 @@ function App() {
           <a className="network-pill" href="https://bscscan.com" target="_blank" rel="noreferrer">
             <span className="network-dot" /> BNB Chain <ExternalLink size={12} />
           </a>
-          {gasPrice !== null && (
-            <span className={`gas-pill ${gasPrice < 3 ? 'gas-low' : gasPrice < 5 ? 'gas-medium' : 'gas-high'}`}>
-              <span className="gas-dot" /> {gasPrice.toFixed(1)} Gwei
-            </span>
-          )}
           {account ? (
             <button className="wallet-button connected" type="button" onClick={() => setAccount(null)} title="Disconnect wallet">
               <span className="wallet-dot" />{shortAddress(account)}<ChevronDown size={12} />
