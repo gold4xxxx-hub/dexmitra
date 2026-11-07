@@ -454,7 +454,7 @@
 }
 .metric-value small {
   color: var(--secondary);
-  font: 500 10px var(--mono);
+  font: 700 1.2rem var(--mono);
   margin-left: 4px;
 }
 .metric-foot { margin-top: 8px; color: var(--secondary); font-size: 10px; font-weight: 500; }

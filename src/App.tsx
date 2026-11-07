@@ -860,19 +860,19 @@ function App() {
         <section className="metrics" aria-label="Account summary">
           <article className="metric metric-primary reveal-on-scroll">
             <div className="metric-label">TOTAL INVESTED <span title="Value reported by the contract."><CircleHelp size={12} aria-label="Value reported by the contract" /></span></div>
-            <div className="metric-value">{loading ? <Skeleton width={60} /> : <Counter target={summary?.totalInvested ?? 0n} decimals={unitDecimals} />}<small>units</small></div>
+            <div className="metric-value">{loading ? <Skeleton width={60} /> : <Counter target={summary?.totalInvested ?? 0n} decimals={unitDecimals} />}<small>$</small></div>
           </article>
           <article className="metric reveal-on-scroll">
             <div className="metric-label">ACTIVE PRINCIPAL</div>
-            <div className="metric-value">{loading ? <Skeleton width={60} /> : <Counter target={summary?.activeInvested ?? 0n} decimals={unitDecimals} />}<small>units</small></div>
+            <div className="metric-value">{loading ? <Skeleton width={60} /> : <Counter target={summary?.activeInvested ?? 0n} decimals={unitDecimals} />}<small>$</small></div>
           </article>
           <article className="metric metric-earn reveal-on-scroll">
             <div className="metric-label">WITHDRAWABLE</div>
-            <div className="metric-value">{loading ? <Skeleton width={60} /> : <Counter target={summary?.withdrawable ?? 0n} decimals={unitDecimals} />}<small>units</small></div>
+            <div className="metric-value">{loading ? <Skeleton width={60} /> : <Counter target={summary?.withdrawable ?? 0n} decimals={unitDecimals} />}<small>$</small></div>
           </article>
           <article className="metric metric-earn reveal-on-scroll">
             <div className="metric-label">PENDING ROI</div>
-            <div className="metric-value">{loading ? <Skeleton width={60} /> : <Counter target={summary?.pendingRoi ?? 0n} decimals={unitDecimals} />}<small>units</small></div>
+            <div className="metric-value">{loading ? <Skeleton width={60} /> : <Counter target={summary?.pendingRoi ?? 0n} decimals={unitDecimals} />}<small>$</small></div>
           </article>
         </section>
 
