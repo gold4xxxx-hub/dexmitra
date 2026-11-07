@@ -838,43 +838,56 @@ function App() {
             </div>
             <nav className="menu-nav">
               <button type="button" className="menu-item" onClick={() => scrollToSection('top')}>
-                <span className="menu-item-icon">🏠</span> Dashboard
+                <span className="menu-item-icon"><Landmark size={16} strokeWidth={1.8} /></span>
+                <span className="menu-item-label">Dashboard</span>
               </button>
               <button type="button" className="menu-item" onClick={() => scrollToSection('contract-section')}>
-                <span className="menu-item-icon">📜</span> Contract Vault
+                <span className="menu-item-icon"><ShieldAlert size={16} strokeWidth={1.8} /></span>
+                <span className="menu-item-label">Contract Vault</span>
               </button>
               <button type="button" className="menu-item" onClick={() => scrollToSection('metrics-section')}>
-                <span className="menu-item-icon">📊</span> KPI Metrics
+                <span className="menu-item-icon"><CircleHelp size={16} strokeWidth={1.8} /></span>
+                <span className="menu-item-label">KPI Metrics</span>
               </button>
               <button type="button" className="menu-item" onClick={() => scrollToSection('positions-section')}>
-                <span className="menu-item-icon">💼</span> Positions
+                <span className="menu-item-icon"><ArrowDownLeft size={16} strokeWidth={1.8} /></span>
+                <span className="menu-item-label">Positions</span>
               </button>
               <button type="button" className="menu-item" onClick={() => scrollToSection('plan-params-section')}>
-                <span className="menu-item-icon">📋</span> Plan Parameters
+                <span className="menu-item-icon"><ExternalLink size={16} strokeWidth={1.8} /></span>
+                <span className="menu-item-label">Plan Parameters</span>
               </button>
               <button type="button" className="menu-item" onClick={() => scrollToSection('plan-compare-section')}>
-                <span className="menu-item-icon">⚖️</span> Plan Comparison
+                <span className="menu-item-icon"><RefreshCw size={16} strokeWidth={1.8} /></span>
+                <span className="menu-item-label">Plan Comparison</span>
               </button>
               <button type="button" className="menu-item" onClick={() => scrollToSection('action-panel-section')}>
-                <span className="menu-item-icon">⚡</span> Manage Account
+                <span className="menu-item-icon"><Wallet size={16} strokeWidth={1.8} /></span>
+                <span className="menu-item-label">Manage Account</span>
               </button>
               <button type="button" className="menu-item" onClick={() => scrollToSection('referral-section')}>
-                <span className="menu-item-icon">🔗</span> Referral Network
+                <span className="menu-item-icon"><ExternalLink size={16} strokeWidth={1.8} /></span>
+                <span className="menu-item-label">Referral Network</span>
               </button>
               <button type="button" className="menu-item" onClick={() => scrollToSection('timeline-section')}>
-                <span className="menu-item-icon">📅</span> Investment Timeline
+                <span className="menu-item-icon"><RefreshCw size={16} strokeWidth={1.8} /></span>
+                <span className="menu-item-label">Investment Timeline</span>
               </button>
               <button type="button" className="menu-item" onClick={() => scrollToSection('tx-history-section')}>
-                <span className="menu-item-icon">📝</span> Transaction History
+                <span className="menu-item-icon"><Check size={16} strokeWidth={1.8} /></span>
+                <span className="menu-item-label">Transaction History</span>
               </button>
               <button type="button" className="menu-item" onClick={() => scrollToSection('cap-gauge-section')}>
-                <span className="menu-item-icon">🎯</span> Cap Utilization
+                <span className="menu-item-icon"><ShieldAlert size={16} strokeWidth={1.8} /></span>
+                <span className="menu-item-label">Cap Utilization</span>
               </button>
               <button type="button" className="menu-item" onClick={() => scrollToSection('levels-section')}>
-                <span className="menu-item-icon">📈</span> Level Business
+                <span className="menu-item-icon"><ArrowUpRight size={16} strokeWidth={1.8} /></span>
+                <span className="menu-item-label">Level Business</span>
               </button>
               <button type="button" className="menu-item" onClick={() => scrollToSection('health-score-section')}>
-                <span className="menu-item-icon">💚</span> Health Score
+                <span className="menu-item-icon"><CircleHelp size={16} strokeWidth={1.8} /></span>
+                <span className="menu-item-label">Health Score</span>
               </button>
             </nav>
           </div>
