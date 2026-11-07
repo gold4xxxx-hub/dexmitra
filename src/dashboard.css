@@ -660,7 +660,7 @@
   background: var(--card);
   box-shadow: var(--shadow-card);
 }
-.data-section { padding: 24px; }
+.data-section { padding: 20px; }
 
 .section-heading, .action-heading {
   display: flex;
