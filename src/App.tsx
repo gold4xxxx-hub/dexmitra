@@ -816,7 +816,6 @@ function App() {
           <div>
             <p className="eyebrow">ACCOUNT CONSOLE <span>·</span> BSC MAINNET</p>
             <h1>Dashboard</h1>
-            <p className="subheading">A direct view of your account and the contract state.</p>
           </div>
           <button className="icon-button refresh-button" type="button" onClick={() => setRefreshVersion((version) => version + 1)} aria-label="Refresh contract data" title="Refresh">
             <RefreshCw size={15} />
@@ -862,22 +861,18 @@ function App() {
           <article className="metric metric-primary reveal-on-scroll">
             <div className="metric-label">TOTAL INVESTED <span title="Value reported by the contract."><CircleHelp size={12} aria-label="Value reported by the contract" /></span></div>
             <div className="metric-value">{loading ? <Skeleton width={60} /> : <Counter target={summary?.totalInvested ?? 0n} decimals={unitDecimals} />}<small>units</small></div>
-            <div className="metric-foot">Lifetime deposits</div>
           </article>
           <article className="metric reveal-on-scroll">
             <div className="metric-label">ACTIVE PRINCIPAL</div>
             <div className="metric-value">{loading ? <Skeleton width={60} /> : <Counter target={summary?.activeInvested ?? 0n} decimals={unitDecimals} />}<small>units</small></div>
-            <div className="metric-foot">Currently active</div>
           </article>
           <article className="metric metric-earn reveal-on-scroll">
             <div className="metric-label">WITHDRAWABLE</div>
             <div className="metric-value">{loading ? <Skeleton width={60} /> : <Counter target={summary?.withdrawable ?? 0n} decimals={unitDecimals} />}<small>units</small></div>
-            <div className="metric-foot">Contract-reported balance</div>
           </article>
           <article className="metric metric-earn reveal-on-scroll">
             <div className="metric-label">PENDING ROI</div>
             <div className="metric-value">{loading ? <Skeleton width={60} /> : <Counter target={summary?.pendingRoi ?? 0n} decimals={unitDecimals} />}<small>units</small></div>
-            <div className="metric-foot">Not a guaranteed return</div>
           </article>
         </section>
 
