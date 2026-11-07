@@ -2285,9 +2285,9 @@
   font-size: 0.85rem;
 }
 @media (max-width: 760px) {
-  .mobile-sticky-cta { display: block; }
+  .mobile-sticky-cta { display: block; bottom: 60px; padding-bottom: 8px; }
   .action-form .submit-button { display: none; }
-  .main-content { padding-bottom: 160px; }
+  .main-content { padding-bottom: 130px; }
 }
 
 /* --- Mobile Bottom Navigation Bar --- */
@@ -2769,36 +2769,71 @@
   .tiers-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 760px) {
-  .topbar { height: 62px; padding: 0 16px; }
-  .main-content { padding: 16px 14px 22px; }
-  .page-heading { padding: 24px 0 16px; }
-  h1 { font-size: 26px; }
-  .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  .metric { padding: 14px; }
-  .workspace-grid { grid-template-columns: 1fr; gap: 16px; }
-  .action-panel { grid-row: 1; }
-  .data-section { padding: 18px; }
-  .action-panel > .section-content { padding: 18px; }
-  .position-stats { grid-template-columns: 1fr; gap: 8px; }
-  .tiers-grid { gap: 10px; }
-  .tier-card { padding: 16px 14px; }
-  .action-tabs button { padding: 6px 4px; font-size: 0.72rem; }
-  .submit-button { min-height: 48px; font-size: 0.9rem; }
-  .contract-strip { gap: 10px; padding: 10px 14px; }
-  .contract-balance { margin-left: 0; font-size: 11px; padding: 6px 10px; }
-  .status-chip { width: 100%; justify-content: center; font-size: 10px; padding: 5px 10px; }
-  .page-footer { flex-direction: column; gap: 10px; }
+  .topbar { height: 56px; padding: 0 12px; }
+  .hamburger-btn { width: 36px; height: 36px; }
+  .brand { font-size: 17px; gap: 8px; }
+  .brand-mark { width: 28px; height: 28px; }
+  .brand-mark svg { width: 14px; height: 14px; }
+  .main-content { padding: 14px 10px 130px; }
+  .page-heading { padding: 18px 0 12px; gap: 8px; }
+  h1 { font-size: 22px; letter-spacing: -0.03em; }
+  .subheading { font-size: 11px; margin-top: 4px; }
+  .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+  .metric { padding: 11px 9px; border-radius: 10px; }
+  .metric-value { font-size: 1.2rem; }
+  .metric-label { font-size: 0.6rem; margin-bottom: 4px; letter-spacing: 0.06em; }
+  .metric-foot { font-size: 9px; margin-top: 3px; }
+  .metric-value small { font-size: 0.9rem; }
+  .workspace-grid { grid-template-columns: 1fr; gap: 10px; margin-top: 12px; }
+  .action-panel { grid-row: auto; }
+  .data-section { padding: 12px; border-radius: 10px; margin-bottom: 10px; }
+  .action-panel > .section-content { padding: 12px; }
+  .section-heading { margin-bottom: 10px; }
+  .section-heading h2 { font-size: 14px; }
+  .section-heading .eyebrow { font-size: 9px; }
+  .position-stats { grid-template-columns: 1fr; gap: 6px; }
+  .tiers-grid { gap: 8px; }
+  .tier-card { padding: 12px 10px; border-radius: 10px; }
+  .action-tabs button { padding: 5px 3px; font-size: 0.68rem; }
+  .submit-button { min-height: 44px; font-size: 0.85rem; }
+  .contract-strip { gap: 8px; padding: 9px 11px; border-radius: 10px; }
+  .contract-strip code { font-size: 10px; max-width: 100%; }
+  .contract-balance { margin-left: 0; font-size: 10px; padding: 5px 8px; }
+  .status-chip { width: auto; justify-content: center; font-size: 9px; padding: 4px 8px; }
+  .page-footer { flex-direction: column; gap: 6px; font-size: 10px; }
+  .empty-state { padding: 18px 14px; border-radius: 10px; }
+  .empty-state-icon { width: 40px; height: 40px; border-radius: 10px; }
+  /* Softer, premium box boundaries on mobile */
+  .data-section, .metric, .tier-card, .position-card, .referral-stat-card {
+    border-color: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.25);
+  }
+  .contract-strip { border-color: rgba(16, 185, 129, 0.18); }
 }
 @media (max-width: 480px) {
-  .topbar-right { gap: 6px; }
-  .wallet-button { min-width: auto; padding: 0 10px; font-size: 11px; }
-  .contract-strip { flex-direction: column; align-items: stretch; gap: 10px; }
-  .contract-balance { margin-left: 0; }
-  .status-chip { width: 100%; justify-content: center; }
-  .positions-grid { gap: 10px; }
-  .position-card { padding: 14px; }
-  .position-stats { margin: 10px 0; }
-  .progress-row { margin-top: 8px; }
+  .topbar { height: 52px; padding: 0 10px; }
+  .topbar-right { gap: 4px; }
+  .wallet-button { min-width: auto; padding: 0 8px; font-size: 10px; min-height: 32px; }
+  .network-pill { font-size: 10px; padding: 0 8px; min-height: 32px; }
+  .gas-pill { font-size: 9px; padding: 2px 6px; }
+  .contract-strip { flex-direction: column; align-items: stretch; gap: 6px; padding: 8px 10px; }
+  .contract-strip > div { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .contract-balance { margin-left: 0; font-size: 9px; padding: 4px 6px; }
+  .status-chip { width: 100%; justify-content: center; font-size: 9px; }
+  .positions-grid { gap: 8px; }
+  .position-card { padding: 11px; border-radius: 10px; }
+  .position-stats { margin: 8px 0; gap: 4px; }
+  .progress-row { margin-top: 6px; }
+  .metrics { gap: 6px; }
+  .metric { padding: 9px 7px; }
+  .metric-value { font-size: 1.05rem; }
+  .data-section { padding: 10px; margin-bottom: 8px; }
+  .action-panel > .section-content { padding: 10px; }
+  .page-heading { padding: 10px 0 8px; }
+  h1 { font-size: 20px; }
+  .member-since { padding: 6px 10px; font-size: 10px; }
+  .mobile-bottom-nav { padding: 4px 6px; }
+  .mobile-nav-btn { min-height: 44px; font-size: 0.55rem; padding: 4px 2px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
