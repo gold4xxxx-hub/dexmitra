@@ -889,7 +889,7 @@ function App() {
                   <p className="eyebrow">PORTFOLIO</p>
                   <h2>Investment positions</h2>
                 </div>
-                <span className="count-pill">{investments.filter((item) => item.active).length} active</span>
+                <span className="count-pill">{investments.length} total · {investments.filter((item) => item.active).length} active</span>
               </div>
               {!account ? (
                 <EmptyState icon={<Wallet size={24} />} title="Connect a wallet" description="Your investment positions will appear here once you connect." cta="Connect wallet" onCta={() => void connectWallet()} />
