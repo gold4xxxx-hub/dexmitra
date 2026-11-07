@@ -9,9 +9,11 @@ import {
   ExternalLink,
   Landmark,
   LoaderCircle,
+  Menu,
   RefreshCw,
   ShieldAlert,
   Wallet,
+  X,
 } from 'lucide-react'
 import {
   createPublicClient,
@@ -248,6 +250,7 @@ function App() {
   const [copiedLink, setCopiedLink] = useState(false)
   const [copiedAddress, setCopiedAddress] = useState(false)
   const [withdrawCooldownRemaining, setWithdrawCooldownRemaining] = useState(0)
+  const [menuOpen, setMenuOpen] = useState(false)
   const [timelineTab, setTimelineTab] = useState<'positions' | 'events'>('positions')
   const [pullToRefreshState, setPullToRefreshState] = useState<'idle' | 'pulling' | 'refreshing'>('idle')
   const [pullDistance, setPullDistance] = useState(0)
@@ -754,6 +757,14 @@ function App() {
     setError('')
   }
 
+  const scrollToSection = (id: string) => {
+    setMenuOpen(false)
+    const el = document.getElementById(id)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+
   // Toast notification system
   const addToast = (type: 'success' | 'error' | 'info', message: string) => {
     // eslint-disable-next-line react-hooks/purity
@@ -778,6 +789,9 @@ function App() {
   return (
     <div className="app-shell">
       <header className="topbar">
+        <button type="button" className="hamburger-btn" onClick={() => setMenuOpen(true)} aria-label="Open menu">
+          <Menu size={20} />
+        </button>
         <a className="brand" href="#top" aria-label="Dexmitra dashboard">
           <span className="brand-mark"><Landmark size={16} strokeWidth={2} /></span>
           <span>dexmitra<span className="brand-period">.</span></span>
@@ -811,6 +825,62 @@ function App() {
         </div>
       )}
 
+      {/* Hamburger Menu Overlay */}
+      {menuOpen && (
+        <div className="menu-overlay" onClick={() => setMenuOpen(false)}>
+          <div className="menu-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="menu-header">
+              <span className="brand-mark"><Landmark size={16} strokeWidth={2} /></span>
+              <span className="menu-title">dexmitra.</span>
+              <button type="button" className="menu-close" onClick={() => setMenuOpen(false)} aria-label="Close menu">
+                <X size={20} />
+              </button>
+            </div>
+            <nav className="menu-nav">
+              <button type="button" className="menu-item" onClick={() => scrollToSection('top')}>
+                <span className="menu-item-icon">🏠</span> Dashboard
+              </button>
+              <button type="button" className="menu-item" onClick={() => scrollToSection('contract-section')}>
+                <span className="menu-item-icon">📜</span> Contract Vault
+              </button>
+              <button type="button" className="menu-item" onClick={() => scrollToSection('metrics-section')}>
+                <span className="menu-item-icon">📊</span> KPI Metrics
+              </button>
+              <button type="button" className="menu-item" onClick={() => scrollToSection('positions-section')}>
+                <span className="menu-item-icon">💼</span> Positions
+              </button>
+              <button type="button" className="menu-item" onClick={() => scrollToSection('plan-params-section')}>
+                <span className="menu-item-icon">📋</span> Plan Parameters
+              </button>
+              <button type="button" className="menu-item" onClick={() => scrollToSection('plan-compare-section')}>
+                <span className="menu-item-icon">⚖️</span> Plan Comparison
+              </button>
+              <button type="button" className="menu-item" onClick={() => scrollToSection('action-panel-section')}>
+                <span className="menu-item-icon">⚡</span> Manage Account
+              </button>
+              <button type="button" className="menu-item" onClick={() => scrollToSection('referral-section')}>
+                <span className="menu-item-icon">🔗</span> Referral Network
+              </button>
+              <button type="button" className="menu-item" onClick={() => scrollToSection('timeline-section')}>
+                <span className="menu-item-icon">📅</span> Investment Timeline
+              </button>
+              <button type="button" className="menu-item" onClick={() => scrollToSection('tx-history-section')}>
+                <span className="menu-item-icon">📝</span> Transaction History
+              </button>
+              <button type="button" className="menu-item" onClick={() => scrollToSection('cap-gauge-section')}>
+                <span className="menu-item-icon">🎯</span> Cap Utilization
+              </button>
+              <button type="button" className="menu-item" onClick={() => scrollToSection('levels-section')}>
+                <span className="menu-item-icon">📈</span> Level Business
+              </button>
+              <button type="button" className="menu-item" onClick={() => scrollToSection('health-score-section')}>
+                <span className="menu-item-icon">💚</span> Health Score
+              </button>
+            </nav>
+          </div>
+        </div>
+      )}
+
       <main id="top" className="main-content">
         <div className="page-heading">
           <div>
@@ -822,7 +892,7 @@ function App() {
           </button>
         </div>
 
-        <section className="contract-strip reveal-on-scroll" aria-label="Contract address">
+        <section id="contract-section" className="contract-strip reveal-on-scroll" aria-label="Contract address">
           <span className="contract-label">Contract</span>
           <code>{CONTRACT_ADDRESS}</code>
           <button
@@ -857,7 +927,7 @@ function App() {
         {error && <div className="feedback error-feedback" role="alert"><BadgeAlert size={16} /><span>{error}</span><button type="button" className="feedback-retry-btn" onClick={() => { setError(''); setLoadRetry((v) => v + 1) }}>Retry</button><button type="button" onClick={() => setError('')} aria-label="Dismiss"><span aria-hidden="true">×</span></button></div>}
         {notice && <div className="feedback success-feedback" role="status"><Check size={16} /><span>{notice} {txHash && <a href={`https://bscscan.com/tx/${txHash}`} target="_blank" rel="noreferrer">View transaction <ExternalLink size={12} /></a>}</span></div>}
 
-        <section className="metrics" aria-label="Account summary">
+        <section id="metrics-section" className="metrics" aria-label="Account summary">
           <article className="metric metric-primary reveal-on-scroll">
             <div className="metric-label">TOTAL INVESTED <span title="Value reported by the contract."><CircleHelp size={12} aria-label="Value reported by the contract" /></span></div>
             <div className="metric-value">{loading ? <Skeleton width={60} /> : <Counter target={summary?.totalInvested ?? 0n} decimals={unitDecimals} />}<small>$</small></div>
@@ -878,7 +948,7 @@ function App() {
 
         <div className="workspace-grid">
           <div className="left-column">
-            <section className="data-section positions-section reveal-on-scroll">
+            <section id="positions-section" className="data-section positions-section reveal-on-scroll">
               <div className="section-heading">
                 <div>
                   <p className="eyebrow">PORTFOLIO</p>
@@ -943,7 +1013,7 @@ function App() {
               )}
             </section>
 
-            <section className="data-section terms-section reveal-on-scroll">
+            <section id="plan-params-section" className="data-section terms-section reveal-on-scroll">
               <div className="section-heading">
                 <div>
                   <p className="eyebrow">READ FROM CONTRACT</p>
@@ -991,7 +1061,7 @@ function App() {
               <p className="terms-note"><CircleHelp size={13} /> Rates and caps are contract parameters, not promises of payment.</p>
             </section>
 
-            <section className="data-section health-score-section">
+            <section id="health-score-section" className="data-section health-score-section">
               <div className="section-heading">
                 <div>
                   <p className="eyebrow">PORTFOLIO HEALTH</p>
@@ -1072,7 +1142,7 @@ function App() {
               )}
             </section>
 
-            <section className="data-section plan-compare-section">
+            <section id="plan-compare-section" className="data-section plan-compare-section">
               <div className="section-heading">
                 <div>
                   <p className="eyebrow">PLAN COMPARISON</p>
@@ -1339,7 +1409,7 @@ function App() {
               <p className="terms-note"><CircleHelp size={13} /> Analytics based on on-chain contract data. Not a guarantee of future returns.</p>
             </section>
 
-            <section className="data-section levels-section">
+            <section id="levels-section" className="data-section levels-section">
               <div className="section-heading">
                 <div>
                   <p className="eyebrow">DOWNLINE NETWORK</p>
@@ -1398,7 +1468,7 @@ function App() {
               <p className="terms-note"><CircleHelp size={13} /> Level income pays % of downline ROI. Level N requires N direct referrals. Max 20 tokens/level/day.</p>
             </section>
 
-            <section className="data-section cap-gauge-section">
+            <section id="cap-gauge-section" className="data-section cap-gauge-section">
               <div className="section-heading">
                 <div>
                   <p className="eyebrow">CAP UTILIZATION</p>
@@ -1477,7 +1547,7 @@ function App() {
               <p className="terms-note"><CircleHelp size={13} /> Cap utilization shows how much of your income cap has been earned. Green = healthy, amber = approaching, red = near cap.</p>
             </section>
 
-            <section className="data-section timeline-section">
+            <section id="timeline-section" className="data-section timeline-section">
               <div className="section-heading">
                 <div>
                   <p className="eyebrow">PORTFOLIO TIMELINE</p>
@@ -1588,7 +1658,7 @@ function App() {
               <p className="terms-note"><CircleHelp size={13} /> Timeline based on on-chain investment records. Dates are approximate.</p>
             </section>
 
-            <section className="data-section tx-history-section">
+            <section id="tx-history-section" className="data-section tx-history-section">
               <div className="section-heading">
                 <div>
                   <p className="eyebrow">TRANSACTION HISTORY</p>
@@ -1628,7 +1698,7 @@ function App() {
               <p className="terms-note"><CircleHelp size={13} /> Transaction history is stored locally. Clearing browser data will reset this list.</p>
             </section>
 
-            <section className="data-section referral-section">
+            <section id="referral-section" className="data-section referral-section">
               <div className="section-heading">
                 <div>
                   <p className="eyebrow">REFERRAL NETWORK</p>
@@ -1695,7 +1765,7 @@ function App() {
 
           </div>
 
-          <aside className="action-panel reveal-on-scroll">
+          <aside id="action-panel-section" className="action-panel reveal-on-scroll">
             <div className="section-content">
               <div className="action-heading">
                 <div>
@@ -1821,7 +1891,7 @@ function App() {
             key={tab}
             type="button"
             className={`mobile-nav-btn ${action === tab ? 'selected' : ''} ${tab === 'upgrade' ? 'mobile-nav-utility' : ''}`}
-            onClick={() => selectedTab(tab)}
+            onClick={() => { selectedTab(tab); scrollToSection('action-panel-section') }}
             aria-label={tab === 'upgrade' ? 'Plan' : tab}
           >
             <span className="mobile-nav-icon">

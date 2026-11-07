@@ -46,6 +46,125 @@
   }
 }
 
+/* --- Hamburger Menu Button --- */
+.hamburger-btn {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #0B1410;
+  color: var(--secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex: 0 0 auto;
+}
+.hamburger-btn:hover {
+  border-color: var(--line-strong);
+  color: var(--ink);
+  background: #101C16;
+}
+
+/* --- Menu Overlay --- */
+.menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(7, 13, 10, 0.7);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: toast-slide-in 0.2s ease both;
+}
+.menu-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: min(320px, 85vw);
+  background: #0D1612;
+  border-right: 1px solid var(--line);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  animation: menu-slide-in 0.3s ease both;
+  overflow-y: auto;
+}
+@keyframes menu-slide-in {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+.menu-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--line);
+  flex: 0 0 auto;
+}
+.menu-header .brand-mark {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #0d3b2a 0%, #071710 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.menu-title {
+  flex: 1 1 auto;
+  color: var(--ink);
+  font: 700 18px/1 var(--display);
+  letter-spacing: -0.02em;
+}
+.menu-close {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #0B1410;
+  color: var(--secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex: 0 0 auto;
+}
+.menu-close:hover {
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+.menu-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  gap: 4px;
+  flex: 1 1 auto;
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--secondary);
+  font: 600 0.85rem var(--display);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+  width: 100%;
+}
+.menu-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink);
+}
+.menu-item-icon {
+  font-size: 1rem;
+  flex: 0 0 auto;
+}
+
 /* --- Top Navigation Bar --- */
 .topbar {
   height: 72px;
