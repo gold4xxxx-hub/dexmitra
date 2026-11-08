@@ -735,6 +735,9 @@ function App() {
     setAction(next)
     setNotice('')
     setError('')
+    if (next === 'withdraw' && tokenAddress.toLowerCase() === '0x5c0d286f3812da7f6bd766b7aadadc7059938de8') {
+      setTokenAddress(PAYMENT_TOKENS[0].address)
+    }
   }
 
   const scrollToSection = (id: string) => {
@@ -1778,7 +1781,7 @@ function App() {
               </div>
               <form className="action-form" onSubmit={(event) => void submitAction(event)}>
                 {!['upgrade', 'reinvest'].includes(action) && <label className="field-label" htmlFor="token-address">Payment token</label>}
-                {!['upgrade', 'reinvest'].includes(action) && <select id="token-address" value={tokenAddress} onChange={(event) => setTokenAddress(event.target.value)}>{PAYMENT_TOKENS.map((token) => <option value={token.address} key={token.address}>{token.symbol} · {token.name}</option>)}</select>}
+                {!['upgrade', 'reinvest'].includes(action) && <select id="token-address" value={tokenAddress} onChange={(event) => setTokenAddress(event.target.value)}>{PAYMENT_TOKENS.filter((token) => !(action === 'withdraw' && token.symbol === 'GC')).map((token) => <option value={token.address} key={token.address}>{token.symbol} · {token.name}</option>)}</select>}
                 {!['upgrade', 'reinvest'].includes(action) && <div className={`token-validation ${tokenAllowed === true ? 'valid' : tokenAllowed === false ? 'invalid' : ''}`}>{tokenAllowed === true ? `${tokenSymbol} · ${tokenDecimals} decimals · allowed by contract` : tokenAllowed === false ? 'Token is not allowed by the contract' : 'Checking token with the contract…'}</div>}
 
                 {action === 'register' && (
