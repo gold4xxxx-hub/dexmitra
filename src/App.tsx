@@ -94,6 +94,7 @@ type ContractTerms = {
 }
 
 type Action = 'register' | 'invest' | 'withdraw' | 'reinvest' | 'upgrade'
+type View = 'dashboard' | 'positions' | 'plans' | 'analytics' | 'activity' | 'account' | 'referral'
 
 type Toast = {
   id: number
@@ -236,6 +237,7 @@ function App() {
   const [levelEarned, setLevelEarned] = useState<bigint[]>([])
   const [levelPercentages, setLevelPercentages] = useState<bigint[]>([])
   const [action, setAction] = useState<Action>('register')
+  const [view, setView] = useState<View>('dashboard')
   const [amount, setAmount] = useState('')
   const [referrer, setReferrer] = useState('')
   const [referrerMode, setReferrerMode] = useState<'manual' | 'root'>('manual')
@@ -740,12 +742,10 @@ function App() {
     }
   }
 
-  const scrollToSection = (id: string) => {
+  const changeView = (next: View) => {
+    setView(next)
     setMenuOpen(false)
-    const el = document.getElementById(id)
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   // Toast notification system
@@ -815,57 +815,33 @@ function App() {
               </button>
             </div>
             <nav className="menu-nav">
-              <button type="button" className="menu-item" onClick={() => scrollToSection('top')}>
+              <button type="button" className={`menu-item ${view === 'dashboard' ? 'is-active' : ''}`} onClick={() => changeView('dashboard')}>
                 <span className="menu-item-icon"><Landmark size={16} strokeWidth={1.8} /></span>
                 <span className="menu-item-label">Dashboard</span>
               </button>
-              <button type="button" className="menu-item" onClick={() => scrollToSection('contract-section')}>
-                <span className="menu-item-icon"><ShieldAlert size={16} strokeWidth={1.8} /></span>
-                <span className="menu-item-label">Contract Vault</span>
-              </button>
-              <button type="button" className="menu-item" onClick={() => scrollToSection('metrics-section')}>
-                <span className="menu-item-icon"><CircleHelp size={16} strokeWidth={1.8} /></span>
-                <span className="menu-item-label">KPI Metrics</span>
-              </button>
-              <button type="button" className="menu-item" onClick={() => scrollToSection('positions-section')}>
+              <button type="button" className={`menu-item ${view === 'positions' ? 'is-active' : ''}`} onClick={() => changeView('positions')}>
                 <span className="menu-item-icon"><ArrowDownLeft size={16} strokeWidth={1.8} /></span>
                 <span className="menu-item-label">Positions</span>
               </button>
-              <button type="button" className="menu-item" onClick={() => scrollToSection('plan-params-section')}>
+              <button type="button" className={`menu-item ${view === 'plans' ? 'is-active' : ''}`} onClick={() => changeView('plans')}>
                 <span className="menu-item-icon"><ExternalLink size={16} strokeWidth={1.8} /></span>
-                <span className="menu-item-label">Plan Parameters</span>
+                <span className="menu-item-label">Plans</span>
               </button>
-              <button type="button" className="menu-item" onClick={() => scrollToSection('plan-compare-section')}>
+              <button type="button" className={`menu-item ${view === 'analytics' ? 'is-active' : ''}`} onClick={() => changeView('analytics')}>
                 <span className="menu-item-icon"><RefreshCw size={16} strokeWidth={1.8} /></span>
-                <span className="menu-item-label">Plan Comparison</span>
+                <span className="menu-item-label">Analytics</span>
               </button>
-              <button type="button" className="menu-item" onClick={() => scrollToSection('action-panel-section')}>
-                <span className="menu-item-icon"><Wallet size={16} strokeWidth={1.8} /></span>
-                <span className="menu-item-label">Manage Account</span>
-              </button>
-              <button type="button" className="menu-item" onClick={() => scrollToSection('referral-section')}>
-                <span className="menu-item-icon"><ExternalLink size={16} strokeWidth={1.8} /></span>
-                <span className="menu-item-label">Referral Network</span>
-              </button>
-              <button type="button" className="menu-item" onClick={() => scrollToSection('timeline-section')}>
-                <span className="menu-item-icon"><RefreshCw size={16} strokeWidth={1.8} /></span>
-                <span className="menu-item-label">Investment Timeline</span>
-              </button>
-              <button type="button" className="menu-item" onClick={() => scrollToSection('tx-history-section')}>
+              <button type="button" className={`menu-item ${view === 'activity' ? 'is-active' : ''}`} onClick={() => changeView('activity')}>
                 <span className="menu-item-icon"><Check size={16} strokeWidth={1.8} /></span>
-                <span className="menu-item-label">Transaction History</span>
+                <span className="menu-item-label">Activity</span>
               </button>
-              <button type="button" className="menu-item" onClick={() => scrollToSection('cap-gauge-section')}>
-                <span className="menu-item-icon"><ShieldAlert size={16} strokeWidth={1.8} /></span>
-                <span className="menu-item-label">Cap Utilization</span>
+              <button type="button" className={`menu-item ${view === 'account' ? 'is-active' : ''}`} onClick={() => changeView('account')}>
+                <span className="menu-item-icon"><Wallet size={16} strokeWidth={1.8} /></span>
+                <span className="menu-item-label">Account</span>
               </button>
-              <button type="button" className="menu-item" onClick={() => scrollToSection('levels-section')}>
-                <span className="menu-item-icon"><ArrowUpRight size={16} strokeWidth={1.8} /></span>
-                <span className="menu-item-label">Level Business</span>
-              </button>
-              <button type="button" className="menu-item" onClick={() => scrollToSection('health-score-section')}>
-                <span className="menu-item-icon"><CircleHelp size={16} strokeWidth={1.8} /></span>
-                <span className="menu-item-label">Health Score</span>
+              <button type="button" className={`menu-item ${view === 'referral' ? 'is-active' : ''}`} onClick={() => changeView('referral')}>
+                <span className="menu-item-icon"><ExternalLink size={16} strokeWidth={1.8} /></span>
+                <span className="menu-item-label">Referral</span>
               </button>
             </nav>
           </div>
@@ -918,7 +894,7 @@ function App() {
         {error && <div className="feedback error-feedback" role="alert"><BadgeAlert size={16} /><span>{error}</span><button type="button" className="feedback-retry-btn" onClick={() => { setError(''); setLoadRetry((v) => v + 1) }}>Retry</button><button type="button" onClick={() => setError('')} aria-label="Dismiss"><span aria-hidden="true">×</span></button></div>}
         {notice && <div className="feedback success-feedback" role="status"><Check size={16} /><span>{notice} {txHash && <a href={`https://bscscan.com/tx/${txHash}`} target="_blank" rel="noreferrer">View transaction <ExternalLink size={12} /></a>}</span></div>}
 
-        <section id="metrics-section" className="metrics" aria-label="Account summary">
+        {view === 'dashboard' && <section id="metrics-section" className="metrics" aria-label="Account summary">
           <article className="metric metric-primary reveal-on-scroll">
             <div className="metric-label">TOTAL INVESTED <span title="Value reported by the contract."><CircleHelp size={12} aria-label="Value reported by the contract" /></span></div>
             <div className="metric-value">{loading ? <Skeleton width={60} /> : <Counter target={summary?.totalInvested ?? 0n} decimals={unitDecimals} />}<small>$</small></div>
@@ -935,11 +911,12 @@ function App() {
             <div className="metric-label">PENDING ROI</div>
             <div className="metric-value">{loading ? <Skeleton width={60} /> : <Counter target={summary?.pendingRoi ?? 0n} decimals={unitDecimals} />}<small>$</small></div>
           </article>
-        </section>
+        </section>}
 
-        <div className="workspace-grid">
+        <div className={`workspace-grid ${view === 'account' ? '' : 'workspace-grid--single'}`}>
           <div className="left-column">
-            <section id="positions-section" className="data-section positions-section reveal-on-scroll">
+            {view === 'positions' && (
+<section id="positions-section" className="data-section positions-section reveal-on-scroll">
               <div className="section-heading">
                 <div>
                   <p className="eyebrow">PORTFOLIO</p>
@@ -1003,8 +980,10 @@ function App() {
                 </div>
               )}
             </section>
+)}
 
-            <section id="plan-params-section" className="data-section terms-section reveal-on-scroll">
+            {view === 'plans' && (
+<section id="plan-params-section" className="data-section terms-section reveal-on-scroll">
               <div className="section-heading">
                 <div>
                   <p className="eyebrow">READ FROM CONTRACT</p>
@@ -1051,8 +1030,10 @@ function App() {
               </div>
               <p className="terms-note"><CircleHelp size={13} /> Rates and caps are contract parameters, not promises of payment.</p>
             </section>
+)}
 
-            <section id="health-score-section" className="data-section health-score-section">
+            {view === 'dashboard' && (
+<section id="health-score-section" className="data-section health-score-section">
               <div className="section-heading">
                 <div>
                   <p className="eyebrow">PORTFOLIO HEALTH</p>
@@ -1132,8 +1113,10 @@ function App() {
                 </>
               )}
             </section>
+)}
 
-            <section id="plan-compare-section" className="data-section plan-compare-section">
+            {view === 'plans' && (
+<section id="plan-compare-section" className="data-section plan-compare-section">
               <div className="section-heading">
                 <div>
                   <p className="eyebrow">PLAN COMPARISON</p>
@@ -1190,8 +1173,10 @@ function App() {
               )}
               <p className="terms-note"><CircleHelp size={13} /> Plan 2x is final. Plan 2.5x auto-upgrades to 3x at 10 directs. Rates and caps are contract parameters.</p>
             </section>
+)}
 
-            <section className="data-section upgrade-progress-section">
+            {view === 'plans' && (
+<section className="data-section upgrade-progress-section">
               <div className="section-heading">
                 <div>
                   <p className="eyebrow">PLAN PROGRESS</p>
@@ -1266,8 +1251,10 @@ function App() {
               )}
               <p className="terms-note"><CircleHelp size={13} /> Plan upgrades are automatic when the direct threshold is met. 2x is final.</p>
             </section>
+)}
 
-            <section className="data-section chart-section reveal-on-scroll">
+            {view === 'analytics' && (
+<section className="data-section chart-section reveal-on-scroll">
               <div className="section-heading">
                 <div>
                   <p className="eyebrow">ANALYTICS</p>
@@ -1399,8 +1386,10 @@ function App() {
               )}
               <p className="terms-note"><CircleHelp size={13} /> Analytics based on on-chain contract data. Not a guarantee of future returns.</p>
             </section>
+)}
 
-            <section id="levels-section" className="data-section levels-section">
+            {view === 'analytics' && (
+<section id="levels-section" className="data-section levels-section">
               <div className="section-heading">
                 <div>
                   <p className="eyebrow">DOWNLINE NETWORK</p>
@@ -1458,8 +1447,10 @@ function App() {
               )}
               <p className="terms-note"><CircleHelp size={13} /> Level income pays % of downline ROI. Level N requires N direct referrals. Max 20 tokens/level/day.</p>
             </section>
+)}
 
-            <section id="cap-gauge-section" className="data-section cap-gauge-section">
+            {view === 'analytics' && (
+<section id="cap-gauge-section" className="data-section cap-gauge-section">
               <div className="section-heading">
                 <div>
                   <p className="eyebrow">CAP UTILIZATION</p>
@@ -1537,8 +1528,10 @@ function App() {
               )}
               <p className="terms-note"><CircleHelp size={13} /> Cap utilization shows how much of your income cap has been earned. Green = healthy, amber = approaching, red = near cap.</p>
             </section>
+)}
 
-            <section id="timeline-section" className="data-section timeline-section">
+            {view === 'activity' && (
+<section id="timeline-section" className="data-section timeline-section">
               <div className="section-heading">
                 <div>
                   <p className="eyebrow">PORTFOLIO TIMELINE</p>
@@ -1648,8 +1641,10 @@ function App() {
               )}
               <p className="terms-note"><CircleHelp size={13} /> Timeline based on on-chain investment records. Dates are approximate.</p>
             </section>
+)}
 
-            <section id="tx-history-section" className="data-section tx-history-section">
+            {view === 'activity' && (
+<section id="tx-history-section" className="data-section tx-history-section">
               <div className="section-heading">
                 <div>
                   <p className="eyebrow">TRANSACTION HISTORY</p>
@@ -1688,8 +1683,10 @@ function App() {
               )}
               <p className="terms-note"><CircleHelp size={13} /> Transaction history is stored locally. Clearing browser data will reset this list.</p>
             </section>
+)}
 
-            <section id="referral-section" className="data-section referral-section">
+            {view === 'referral' && (
+<section id="referral-section" className="data-section referral-section">
               <div className="section-heading">
                 <div>
                   <p className="eyebrow">REFERRAL NETWORK</p>
@@ -1753,10 +1750,11 @@ function App() {
               )}
               <p className="terms-note"><CircleHelp size={13} /> Referral rewards are contract parameters, not promises of payment.</p>
             </section>
+)}
 
           </div>
 
-          <aside id="action-panel-section" className="action-panel reveal-on-scroll">
+          {view === 'account' && <aside id="action-panel-section" className="action-panel reveal-on-scroll">
             <div className="section-content">
               <div className="action-heading">
                 <div>
@@ -1851,7 +1849,7 @@ function App() {
               </form>
               <div className="action-disclaimer"><ShieldAlert size={14} /><span>Transactions are irreversible. Verify the token, amount, and contract address before approving.</span></div>
             </div>
-          </aside>
+          </aside>}
         </div>
 
         <footer className="page-footer reveal-on-scroll">
@@ -1882,7 +1880,7 @@ function App() {
             key={tab}
             type="button"
             className={`mobile-nav-btn ${action === tab ? 'selected' : ''} ${tab === 'upgrade' ? 'mobile-nav-utility' : ''}`}
-            onClick={() => { selectedTab(tab); scrollToSection('action-panel-section') }}
+            onClick={() => { selectedTab(tab); changeView('account') }}
             aria-label={tab === 'upgrade' ? 'Plan' : tab}
           >
             <span className="mobile-nav-icon">
