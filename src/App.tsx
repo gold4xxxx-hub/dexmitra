@@ -253,6 +253,8 @@ function App() {
   const [copiedAddress, setCopiedAddress] = useState(false)
   const [withdrawCooldownRemaining, setWithdrawCooldownRemaining] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [healthScoreAnim, setHealthScoreAnim] = useState(0)
+  const [capPctAnim, setCapPctAnim] = useState(0)
   const [timelineTab, setTimelineTab] = useState<'positions' | 'events'>('positions')
   const [pullToRefreshState, setPullToRefreshState] = useState<'idle' | 'pulling' | 'refreshing'>('idle')
   const [pullDistance, setPullDistance] = useState(0)
@@ -704,6 +706,43 @@ function App() {
   const is3x = userPlan === 2
   const directs = Number(summary?.directCount ?? 0n)
   const upgradeReady = is25x && directs >= upgradeDirectsNeeded
+
+  // Health score (0-100) composite: 40% active positions + 30% cap headroom + 30% withdrawable ratio
+  const healthScore = (() => {
+    if (!summary) return 0
+    const activeCount = investments.filter((i) => i.active).length
+    const totalCount = investments.length
+    const activeRatio = totalCount > 0 ? (activeCount / totalCount) * 100 : 0
+    const cap = Number(summary.incomeCap ?? 0n)
+    const earned = Number(summary.capEarned ?? 0n)
+    const capUtilization = cap > 0 ? Math.min(100, (earned / cap) * 100) : 0
+    const capHeadroom = 100 - capUtilization
+    const invested = Number(summary.totalInvested ?? 0n)
+    const withdrawable = Number(summary.withdrawable ?? 0n)
+    const withdrawableRatio = invested > 0 ? Math.min(100, (withdrawable / invested) * 100) : 0
+    return Math.round(activeRatio * 0.4 + capHeadroom * 0.3 + withdrawableRatio * 0.3)
+  })()
+  const capPctValue = summary?.incomeCap && summary.incomeCap > 0n
+    ? Math.min(100, Math.round((Number(summary.capEarned) / Number(summary.incomeCap)) * 100))
+    : 0
+
+  // Animate health score & cap utilization gauges from 0 to target
+  useEffect(() => {
+    const targetH = healthScore
+    const targetC = capPctValue
+    const start = performance.now()
+    const duration = 1100
+    let raf = 0
+    const loop = (now: number) => {
+      const t = Math.min(1, (now - start) / duration)
+      const ease = 1 - Math.pow(1 - t, 3)
+      setHealthScoreAnim(targetH * ease)
+      setCapPctAnim(targetC * ease)
+      if (t < 1) raf = requestAnimationFrame(loop)
+    }
+    raf = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(raf)
+  }, [healthScore, capPctValue])
   const planRows = [...eligiblePlans]
   const unitDecimals = terms?.unit.toString().length ? terms.unit.toString().length - 1 : 18
   const tokenScale = 10n ** BigInt(Math.max(0, 18 - tokenDecimals))
@@ -833,7 +872,7 @@ function App() {
           </button>
         </div>
 
-        <section id="contract-section" className="contract-strip reveal-on-scroll" aria-label="Contract address">
+        {view === 'dashboard' && <section id="contract-section" className="contract-strip reveal-on-scroll" aria-label="Contract address">
           <span className="contract-label">Contract</span>
           <code>{CONTRACT_ADDRESS}</code>
           <button
@@ -855,7 +894,7 @@ function App() {
           <span className="contract-balance"><span className="contract-label">Contract</span> USDT {prettyAmount(contractUsdtBalance ?? undefined, 18)} · GC {prettyAmount(contractGcBalance ?? undefined, 6)}</span>
           {account && <span className="wallet-balance"><span className="contract-label">Your wallet</span> USDT {prettyAmount(walletUsdtBalance ?? undefined, 18)} · GC {prettyAmount(walletGcBalance ?? undefined, 6)}</span>}
           <span className={`status-chip ${terms?.paused ? 'is-paused' : 'is-live'}`}><span />{terms?.paused ? 'Paused' : 'Contract active'}</span>
-        </section>
+        </section>}
 
         {account && summary && (
           <div className="member-since">
@@ -1024,22 +1063,10 @@ function App() {
                   <div className="health-gauge-wrap">
                     <svg viewBox="0 0 200 200" className="health-gauge">
                       {(() => {
-                        const activeCount = investments.filter((i) => i.active).length
-                        const totalCount = investments.length
-                        const activeRatio = totalCount > 0 ? (activeCount / totalCount) * 100 : 0
-                        const cap = Number(summary?.incomeCap ?? 0n)
-                        const earned = Number(summary?.capEarned ?? 0n)
-                        const capUtilization = cap > 0 ? Math.min(100, (earned / cap) * 100) : 0
-                        const capHeadroom = 100 - capUtilization
-                        const invested = Number(summary?.totalInvested ?? 0n)
-                        const withdrawable = Number(summary?.withdrawable ?? 0n)
-                        const withdrawableRatio = invested > 0 ? Math.min(100, (withdrawable / invested) * 100) : 0
-                        const score = Math.round(activeRatio * 0.4 + capHeadroom * 0.3 + withdrawableRatio * 0.3)
-                        const color = score >= 70 ? '#10b981' : score >= 40 ? '#f59e0b' : '#ef4444'
+                        const color = healthScore >= 70 ? '#10b981' : healthScore >= 40 ? '#f59e0b' : '#ef4444'
                         const r = 70
                         const circumference = 2 * Math.PI * r
-                        const dash = (score / 100) * circumference
-                        const gap = circumference - dash
+                        const dash = (healthScoreAnim / 100) * circumference
                         return (
                           <>
                             <circle cx="100" cy="100" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="18" />
@@ -1048,12 +1075,13 @@ function App() {
                               fill="none"
                               stroke={color}
                               strokeWidth="18"
-                              strokeDasharray={`${dash} ${gap}`}
+                              strokeDasharray={circumference}
+                              strokeDashoffset={circumference - dash}
                               transform="rotate(-90 100 100)"
                               strokeLinecap="round"
                               style={{ filter: `drop-shadow(0 0 8px ${color}40)` }}
                             />
-                            <text x="100" y="90" textAnchor="middle" className="health-gauge-score" style={{ fill: color }}>{score}</text>
+                            <text x="100" y="90" textAnchor="middle" className="health-gauge-score" style={{ fill: color }}>{Math.round(healthScoreAnim)}</text>
                             <text x="100" y="110" textAnchor="middle" className="health-gauge-label">Health Score</text>
                           </>
                         )
@@ -1083,7 +1111,7 @@ function App() {
                       </div>
                     </div>
                   </div>
-                  <p className="terms-note"><CircleHelp size={13} /> Health score combines active positions, cap headroom, and withdrawable ratio. Not a financial assessment.</p>
+                  <p className="terms-note"><CircleHelp size={13} /> <strong>Health score (0–100):</strong> a quick portfolio snapshot — 40% active positions (more active = better), 30% cap headroom (room left before hitting your income cap), 30% withdrawable ratio (how much you can withdraw vs. invested). Higher is healthier. Not a financial assessment.</p>
                 </>
               )}
             </section>
@@ -1443,14 +1471,10 @@ function App() {
                   <div className="cap-gauge-wrap">
                     <svg viewBox="0 0 200 200" className="cap-gauge">
                       {(() => {
-                        const cap = Number(summary?.incomeCap ?? 0n)
-                        const earned = Number(summary?.capEarned ?? 0n)
-                        const pct = cap > 0 ? Math.min(100, Math.round((earned / cap) * 100)) : 0
-                        const color = pct < 50 ? '#10b981' : pct < 80 ? '#f59e0b' : '#ef4444'
+                        const color = capPctValue < 50 ? '#10b981' : capPctValue < 80 ? '#f59e0b' : '#ef4444'
                         const r = 70
                         const circumference = 2 * Math.PI * r
-                        const dash = (pct / 100) * circumference
-                        const gap = circumference - dash
+                        const dash = (capPctAnim / 100) * circumference
                         return (
                           <>
                             <circle cx="100" cy="100" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="18" />
@@ -1459,12 +1483,13 @@ function App() {
                               fill="none"
                               stroke={color}
                               strokeWidth="18"
-                              strokeDasharray={`${dash} ${gap}`}
+                              strokeDasharray={circumference}
+                              strokeDashoffset={circumference - dash}
                               transform="rotate(-90 100 100)"
                               strokeLinecap="round"
                               style={{ filter: `drop-shadow(0 0 8px ${color}40)` }}
                             />
-                            <text x="100" y="90" textAnchor="middle" className="cap-gauge-pct" style={{ fill: color }}>{pct}%</text>
+                            <text x="100" y="90" textAnchor="middle" className="cap-gauge-pct" style={{ fill: color }}>{Math.round(capPctAnim)}%</text>
                             <text x="100" y="110" textAnchor="middle" className="cap-gauge-label">Utilized</text>
                           </>
                         )
@@ -1491,7 +1516,7 @@ function App() {
                   </div>
                   <div className="cap-gauge-bar">
                     <div className="cap-gauge-bar-track">
-                      <div className="cap-gauge-bar-fill" style={{ width: (summary?.incomeCap && summary.incomeCap > 0n ? Math.min(100, Math.round((Number(summary.capEarned) / Number(summary.incomeCap)) * 100)) : 0) + '%' }} />
+                      <div className="cap-gauge-bar-fill" style={{ width: capPctAnim + '%' }} />
                     </div>
                     <div className="cap-gauge-bar-labels">
                       <span>0</span>
