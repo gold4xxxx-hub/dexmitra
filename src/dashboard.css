@@ -12,18 +12,14 @@
     radial-gradient(ellipse 70% 35% at 50% -5%, rgba(16, 185, 129, 0.07), transparent);
 }
 
-/* --- Scroll Reveal Animation --- */
-.reveal-on-scroll {
-  opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-              transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  will-change: opacity, transform;
+/* --- Scroll Reveal Animation (CSS-driven, survives re-renders) --- */
+@keyframes revealFade {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-
-.reveal-on-scroll.is-visible {
-  opacity: 1;
-  transform: translateY(0);
+.reveal-on-scroll {
+  animation: revealFade 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  will-change: opacity, transform;
 }
 
 /* Stagger children within grids */

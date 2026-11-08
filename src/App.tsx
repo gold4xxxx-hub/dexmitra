@@ -520,33 +520,7 @@ function App() {
     return () => clearInterval(interval)
   }, [summary?.nextWithdrawAt])
 
-  // Scroll-reveal: observe all .reveal-on-scroll elements
-  useEffect(() => {
-    if (loading) return
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('is-visible')
-            observer.unobserve(entry.target)
-          }
-        })
-      },
-      { threshold: 0.1, rootMargin: '0px 0px -30px 0px' }
-    )
-    const timer = setTimeout(() => {
-      const targets = document.querySelectorAll('.reveal-on-scroll:not(.is-visible)')
-      targets.forEach((el) => {
-        const rect = el.getBoundingClientRect()
-        if (rect.top < window.innerHeight + 200 && rect.bottom > -200) {
-          el.classList.add('is-visible')
-        } else {
-          observer.observe(el)
-        }
-      })
-    }, 150)
-    return () => { clearTimeout(timer); observer.disconnect() }
-  }, [loading, investments.length])
+  // (Scroll-reveal is now CSS-driven via animation; no JS observer needed.)
 
   async function connectWallet() {
     setError('')
