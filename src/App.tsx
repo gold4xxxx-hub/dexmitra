@@ -6,6 +6,7 @@ import {
   Check,
   ChevronDown,
   CircleHelp,
+  Home,
   ExternalLink,
   Landmark,
   LoaderCircle,
@@ -1764,17 +1765,17 @@ function App() {
               </div>
               <div className="action-tabs" role="tablist" aria-label="Contract action">
                 {(['register', 'invest', 'withdraw', 'reinvest', 'upgrade'] as Action[]).map((tab) => (
-                  <button
-                    className={`action-tab ${action === tab ? 'selected' : ''} ${tab === 'upgrade' ? 'action-utility' : ''}`}
-                    type="button"
-                    role="tab"
-                    aria-selected={action === tab}
-                    key={tab}
-                    onClick={() => selectedTab(tab)}
-                  >
-                    <span>{tab === 'upgrade' ? 'Plan' : tab}</span>
-                  </button>
-                ))}
+                   <button
+                     className={`action-tab ${action === tab ? 'selected' : ''} ${tab === 'upgrade' ? 'action-utility' : ''}`}
+                     type="button"
+                     role="tab"
+                     aria-selected={action === tab}
+                     key={tab}
+                     onClick={() => selectedTab(tab)}
+                   >
+                     <span>{tab === 'upgrade' ? 'Plan' : tab}</span>
+                   </button>
+                 ))}
               </div>
               <form className="action-form" onSubmit={(event) => void submitAction(event)}>
                 {!['upgrade', 'reinvest'].includes(action) && <label className="field-label" htmlFor="token-address">Payment token</label>}
@@ -1874,7 +1875,16 @@ function App() {
 
       {/* Mobile Bottom Navigation Bar */}
       <nav className="mobile-bottom-nav" aria-label="Contract actions">
-        {(['register', 'invest', 'withdraw', 'reinvest', 'upgrade'] as Action[]).map((tab) => (
+        <button
+          type="button"
+          className={`mobile-nav-btn ${view === 'dashboard' ? 'selected' : ''}`}
+          onClick={() => changeView('dashboard')}
+          aria-label="Home"
+        >
+          <span className="mobile-nav-icon"><Home size={16} /></span>
+          <span className="mobile-nav-label">Home</span>
+        </button>
+        {(['register', 'invest', 'withdraw', 'upgrade'] as Action[]).map((tab) => (
           <button
             key={tab}
             type="button"
