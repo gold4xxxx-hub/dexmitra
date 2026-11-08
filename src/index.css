@@ -14,35 +14,50 @@ body, #root, .app-shell {
 }
 
 :root {
-  /* Canvas & surfaces — deep obsidian */
-  --canvas: #080A0E;
-  --card: rgba(18, 23, 33, 0.8);
-  --card-inner: #0F131E;
-  --card-raised: #121721;
-  /* Text hierarchy */
+  /* Canvas & surfaces — Deep Void Obsidian */
+  --canvas: #06070A;
+  --card: rgba(16, 18, 26, 0.72);
+  --card-inner: #0E1017;
+  --card-raised: #10131D;
+  /* Text hierarchy — rich contrast */
   --ink: #FFFFFF;
-  --secondary: #CBD5E1;
+  --secondary: #E2E8F0;
   --muted: #94A3B8;
   /* Borders — crisp luxury hairlines */
   --line: rgba(255, 255, 255, 0.08);
   --line-strong: rgba(255, 255, 255, 0.15);
   --line-soft: rgba(255, 255, 255, 0.04);
-  /* Brand — electric emerald */
-  --brand: #00F29D;
-  --brand-deep: #00C480;
-  --brand-glow: rgba(0, 242, 157, 0.25);
-  --brand-surface: rgba(0, 242, 157, 0.06);
-  --brand-border: rgba(0, 242, 157, 0.20);
-  --brand-bg: rgba(0, 242, 157, 0.10);
+  /* Multi-tonal brand accents — NOT monochromatic green */
+  --brand-indigo: #6366F1;
+  --brand-indigo-deep: #4F46E5;
+  --brand-gold: #F59E0B;
+  --brand-gold-deep: #D97706;
+  --brand-emerald: #10B981;
+  --brand-emerald-deep: #059669;
+  /* Accent surfaces & glows — multi-tonal */
+  --indigo-glow: rgba(99, 102, 241, 0.20);
+  --gold-glow: rgba(245, 158, 11, 0.20);
+  --emerald-glow: rgba(16, 185, 129, 0.20);
+  --indigo-border: rgba(99, 102, 241, 0.25);
+  --gold-border: rgba(245, 158, 11, 0.25);
+  --emerald-border: rgba(16, 185, 129, 0.25);
+  --indigo-surface: rgba(99, 102, 241, 0.08);
+  --gold-surface: rgba(245, 158, 11, 0.08);
+  --emerald-surface: rgba(16, 185, 129, 0.08);
+  /* Backward-compat aliases now pointing to indigo (primary brand) */
+  --brand-glow: var(--indigo-glow);
+  --brand-border: var(--indigo-border);
+  --brand-surface: var(--indigo-surface);
+  --brand-bg: var(--indigo-surface);
   /* Semantic */
   --danger: #EF4444;
   --danger-bg: rgba(239, 68, 68, 0.10);
   --receipt-bg: rgba(13, 17, 23, 0.85);
   --receipt-border: rgba(255, 255, 255, 0.06);
-  /* Shadows — layered, premium */
-  --shadow-card: 0 12px 32px -8px rgba(0, 0, 0, 0.5), 0 1px 0 rgba(255,255,255,0.03);
-  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  --shadow-focus: 0 0 20px rgba(0, 242, 157, 0.25);
+  /* Shadows — layered, premium with inset depth */
+  --shadow-card: 0 12px 32px -8px rgba(0, 0, 0, 0.6), 0 1px 0 rgba(255,255,255,0.03);
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06), inset 0 -1px 0 rgba(0,0,0,0.4);
+  --shadow-focus: 0 0 24px rgba(99, 102, 241, 0.25);
   /* Typography */
   --display: 'Plus Jakarta Sans', sans-serif;
   --mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -59,11 +74,14 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
-  background: var(--canvas);
+  background-color: var(--canvas);
   background-image:
-    radial-gradient(ellipse 90% 60% at 90% -10%, rgba(0, 242, 157, 0.06), transparent),
-    radial-gradient(ellipse 70% 50% at 10% 130%, rgba(0, 242, 157, 0.04), transparent),
-    radial-gradient(ellipse 60% 40% at 50% 50%, rgba(0, 242, 157, 0.03), transparent);
+    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.14) 0px, transparent 50%),
+    radial-gradient(at 100% 20%, rgba(245, 158, 11, 0.10) 0px, transparent 50%),
+    radial-gradient(at 50% 100%, rgba(16, 185, 129, 0.10) 0px, transparent 50%),
+    radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 24px 24px;
+  background-repeat: no-repeat, no-repeat, no-repeat, repeat;
   color: var(--ink);
   font-family: var(--display);
 }
@@ -72,7 +90,7 @@ button, input, select { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; }
 a { color: inherit; text-decoration: none; }
-::selection { color: var(--canvas); background: var(--brand); }
+::selection { color: var(--canvas); background: var(--brand-indigo); }
 
 /* Animations */
 @keyframes pulse-status {

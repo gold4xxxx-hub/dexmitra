@@ -934,19 +934,19 @@ function App() {
         {notice && <div className="feedback success-feedback" role="status"><Check size={16} /><span>{notice} {txHash && <a href={`https://bscscan.com/tx/${txHash}`} target="_blank" rel="noreferrer">View transaction <ExternalLink size={12} /></a>}</span></div>}
 
         {view === 'dashboard' && <section id="metrics-section" className="metrics" aria-label="Account summary">
-          <article className="metric metric-primary reveal-on-scroll">
+          <article className="metric metric-indigo reveal-on-scroll">
             <div className="metric-label">TOTAL INVESTED <span title="Value reported by the contract."><CircleHelp size={12} aria-label="Value reported by the contract" /></span></div>
             <div className="metric-value">{loading ? <Skeleton width={60} /> : <Counter target={summary?.totalInvested ?? 0n} decimals={unitDecimals} />}<small>$</small></div>
           </article>
-          <article className="metric reveal-on-scroll">
+          <article className="metric metric-gold reveal-on-scroll">
             <div className="metric-label">ACTIVE PRINCIPAL</div>
             <div className="metric-value">{loading ? <Skeleton width={60} /> : <Counter target={summary?.activeInvested ?? 0n} decimals={unitDecimals} />}<small>$</small></div>
           </article>
-          <article className="metric metric-earn reveal-on-scroll">
+          <article className="metric metric-emerald reveal-on-scroll">
             <div className="metric-label">WITHDRAWABLE</div>
             <div className="metric-value">{loading ? <Skeleton width={60} /> : <Counter target={summary?.withdrawable ?? 0n} decimals={unitDecimals} />}<small>$</small></div>
           </article>
-          <article className="metric metric-earn reveal-on-scroll">
+          <article className="metric metric-emerald reveal-on-scroll">
             <div className="metric-label">PENDING ROI</div>
             <div className="metric-value">{loading ? <Skeleton width={60} /> : <Counter target={summary?.pendingRoi ?? 0n} decimals={unitDecimals} />}<small>$</small></div>
           </article>
