@@ -542,7 +542,7 @@ function App() {
           observer.observe(el)
         }
       })
-    }, 500)
+    }, 150)
     return () => { clearTimeout(timer); observer.disconnect() }
   }, [loading, investments.length])
 

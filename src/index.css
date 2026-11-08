@@ -1,7 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
 
-html, body, #root, .app-shell {
+html {
   overflow-x: hidden;
+  overflow-y: auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+body, #root, .app-shell {
+  overflow-x: hidden;
+  overflow-y: visible;
   width: 100%;
   box-sizing: border-box;
 }

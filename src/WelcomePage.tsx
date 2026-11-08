@@ -4,9 +4,9 @@ export default function WelcomePage({ onFinish }: { onFinish: () => void }) {
   const [phase, setPhase] = useState<'ignite' | 'reveal' | 'fading'>('ignite')
 
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase('reveal'), 700)
-    const t2 = setTimeout(() => setPhase('fading'), 3000)
-    const t3 = setTimeout(() => onFinish(), 4000)
+    const t1 = setTimeout(() => setPhase('reveal'), 500)
+    const t2 = setTimeout(() => setPhase('fading'), 2400)
+    const t3 = setTimeout(() => onFinish(), 3200)
     return () => {
       clearTimeout(t1)
       clearTimeout(t2)
