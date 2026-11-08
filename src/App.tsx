@@ -874,8 +874,10 @@ function App() {
       <main id="top" className="main-content">
         <div className="page-heading">
           <div>
-            <p className="eyebrow">ACCOUNT CONSOLE <span>·</span> BSC MAINNET</p>
             <h1>Dashboard</h1>
+            {account && summary && (
+              <p className="member-since-subtitle">Member since {formatJoinedAt(summary.joinedAt)}</p>
+            )}
           </div>
           <button className="icon-button refresh-button" type="button" onClick={() => setRefreshVersion((version) => version + 1)} aria-label="Refresh contract data" title="Refresh">
             <RefreshCw size={15} />
@@ -883,51 +885,46 @@ function App() {
         </div>
 
         {view === 'dashboard' && <section id="contract-section" className="contract-strip reveal-on-scroll" aria-label="Contract address">
-          <div className="contract-row">
-            <div className="contract-left">
+          <div className="contract-header-row">
+            <span className={`status-chip ${terms?.paused ? 'is-paused' : 'is-live'}`}><span />{terms?.paused ? 'Paused' : 'Active'}</span>
+            <div className="contract-address-wrap">
               <span className="contract-label">Contract</span>
               <code>{CONTRACT_ADDRESS}</code>
               <a href={`https://bscscan.com/address/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer" aria-label="Open contract on BscScan"><ExternalLink size={12} /></a>
             </div>
-            <div className="contract-right">
-              <button
-                type="button"
-                className={`contract-copy-btn ${copiedAddress ? 'copied' : ''}`}
-                onClick={() => {
-                  navigator.clipboard.writeText(CONTRACT_ADDRESS).then(() => {
-                    setCopiedAddress(true)
-                    setTimeout(() => setCopiedAddress(false), 2000)
-                  }).catch(() => {})
-                }}
-                aria-label="Copy contract address"
-                title="Copy contract address"
-              >
-                {copiedAddress ? <Check size={12} /> : <ExternalLink size={12} />}
-                {copiedAddress ? 'Copied!' : 'Copy'}
-              </button>
-              <span className={`status-chip ${terms?.paused ? 'is-paused' : 'is-live'}`}><span />{terms?.paused ? 'Paused' : 'Contract active'}</span>
-            </div>
+            <button
+              type="button"
+              className={`contract-copy-btn ${copiedAddress ? 'copied' : ''}`}
+              onClick={() => {
+                navigator.clipboard.writeText(CONTRACT_ADDRESS).then(() => {
+                  setCopiedAddress(true)
+                  setTimeout(() => setCopiedAddress(false), 2000)
+                }).catch(() => {})
+              }}
+              aria-label="Copy contract address"
+              title="Copy contract address"
+            >
+              {copiedAddress ? <Check size={12} /> : <ExternalLink size={12} />}
+              {copiedAddress ? 'Copied!' : 'Copy'}
+            </button>
           </div>
           <div className="contract-balance-row">
-            <div className="contract-balance-cell">
-              <span className="contract-balance-label">Contract Liquidity</span>
-              <span className="contract-balance-value">USDT {prettyAmount(contractUsdtBalance ?? undefined, 18)} · GC {prettyAmount(contractGcBalance ?? undefined, 6)}</span>
-            </div>
-            {account && (
-              <div className="contract-balance-cell">
-                <span className="contract-balance-label">Your Wallet</span>
-                <span className="contract-balance-value">USDT {prettyAmount(walletUsdtBalance ?? undefined, 18)} · GC {prettyAmount(walletGcBalance ?? undefined, 6)}</span>
+            <div className="contract-balance-card">
+              <span className="contract-balance-label">Your Wallet</span>
+              <div className="contract-balance-grid">
+                <div className="contract-balance-pair"><span className="contract-balance-token">USDT</span><span className="contract-balance-value">{prettyAmount(walletUsdtBalance ?? undefined, 18)}</span></div>
+                <div className="contract-balance-pair"><span className="contract-balance-token">GC</span><span className="contract-balance-value">{prettyAmount(walletGcBalance ?? undefined, 6)}</span></div>
               </div>
-            )}
+            </div>
+            <div className="contract-balance-card">
+              <span className="contract-balance-label">Protocol Pool</span>
+              <div className="contract-balance-grid">
+                <div className="contract-balance-pair"><span className="contract-balance-token">USDT</span><span className="contract-balance-value">{prettyAmount(contractUsdtBalance ?? undefined, 18)}</span></div>
+                <div className="contract-balance-pair"><span className="contract-balance-token">GC</span><span className="contract-balance-value">{prettyAmount(contractGcBalance ?? undefined, 6)}</span></div>
+              </div>
+            </div>
           </div>
         </section>}
-
-        {account && summary && (
-          <div className="member-since">
-            <span className="member-since-label">Member since</span>
-            <span className="member-since-value">{formatJoinedAt(summary.joinedAt)}</span>
-          </div>
-        )}
 
         {terms?.paused && <div className="feedback paused-feedback" role="alert"><ShieldAlert size={16} /><span>Contract is paused. New transactions are disabled. Existing positions are safe.</span></div>}
         {error && <div className="feedback error-feedback" role="alert"><BadgeAlert size={16} /><span>{error}</span><button type="button" className="feedback-retry-btn" onClick={() => { setError(''); setLoadRetry((v) => v + 1) }}>Retry</button><button type="button" onClick={() => setError('')} aria-label="Dismiss"><span aria-hidden="true">×</span></button></div>}

@@ -432,11 +432,12 @@
 }
 
 /* --- Contract Vault Bar — Unified Luxury Card --- */
+/* Contract Strip — unified luxury card with header row + two balance cards */
 .contract-strip {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 18px 20px;
+  gap: 16px;
+  padding: 20px 22px;
   border-radius: 20px;
   background: rgba(18, 23, 33, 0.8);
   backdrop-filter: blur(20px);
@@ -445,7 +446,8 @@
   box-shadow: var(--shadow-card);
 }
 
-.contract-strip .contract-row {
+/* Top header row: status + address + copy + bscscan */
+.contract-header-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -453,10 +455,10 @@
   flex-wrap: wrap;
 }
 
-.contract-strip .contract-left {
+.contract-address-wrap {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex: 1;
   min-width: 0;
 }
@@ -471,23 +473,24 @@
 .contract-strip code {
   color: var(--secondary);
   font: 500 13px var(--mono);
-  max-width: 260px;
+  max-width: 220px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.contract-strip > a {
+.contract-strip .bscscan-link {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: var(--brand);
+  color: var(--brand-indigo);
   transition: all 0.2s ease;
   font-size: 12px;
   font-weight: 600;
   font-family: var(--mono);
+  white-space: nowrap;
 }
-.contract-strip > a:hover { color: #fff; text-shadow: 0 0 8px rgba(0,242,157,0.4); }
+.contract-strip .bscscan-link:hover { color: #fff; text-shadow: 0 0 8px rgba(99,102,241,0.4); }
 
 .contract-copy-btn {
   display: inline-flex;
@@ -502,89 +505,75 @@
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 .contract-copy-btn:hover {
-  border-color: var(--brand);
-  background: var(--brand-surface);
-  color: var(--brand);
+  border-color: var(--brand-indigo);
+  background: var(--indigo-surface);
+  color: var(--brand-indigo);
   box-shadow: var(--shadow-focus);
 }
 .contract-copy-btn.copied {
-  border-color: var(--brand);
-  background: var(--brand-surface);
-  color: var(--brand);
+  border-color: var(--brand-indigo);
+  background: var(--indigo-surface);
+  color: var(--brand-indigo);
 }
 
-/* Status Badge — pulsing live indicator */
-.status-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 12px;
-  color: var(--brand);
-  font-size: 10px;
-  font-weight: 700;
-  font-family: var(--display);
-  border: 1px solid var(--brand-border);
-  background: var(--brand-bg);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.status-chip > span {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--brand);
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.35);
-  animation: pulse-status 2s ease-in-out infinite;
-}
-.status-chip.is-paused {
-  background: rgba(165, 62, 54, 0.12);
-  color: #fca5a5;
-  border-color: rgba(165, 62, 54, 0.25);
-}
-.status-chip.is-paused > span { background: #ef4444; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.35); }
-
-/* Balances Section — 2-column partitioned row with hairline dividers */
+/* Balance cards — two side-by-side cards with token grid inside */
 .contract-balance-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  padding: 10px 0;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+  gap: 14px;
 }
-.contract-balance-cell {
+
+.contract-balance-card {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  border-right: 1px solid var(--line-soft);
-  padding-right: 16px;
+  gap: 10px;
+  padding: 16px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(14, 16, 23, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
-.contract-balance-cell:last-child {
-  border-right: none;
-  padding-right: 0;
-}
+
 .contract-balance-label {
   color: var(--muted);
   font: 600 10px var(--mono);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
+
+.contract-balance-grid {
+  display: grid;
+  gap: 6px;
+}
+
+.contract-balance-pair {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.contract-balance-token {
+  color: var(--muted);
+  font: 500 11px var(--mono);
+}
+
 .contract-balance-value {
   color: var(--ink);
   font: 700 14px var(--mono);
   letter-spacing: -0.01em;
 }
-.contract-balance-value span { color: var(--secondary); }
 
 @media (max-width: 768px) {
   .contract-strip { padding: 16px; gap: 14px; }
-  .contract-strip .contract-row { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .contract-header-row { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .contract-address-wrap { flex-direction: column; align-items: flex-start; gap: 6px; }
   .contract-strip code { max-width: 100%; }
-  .contract-balance-row { grid-template-columns: 1fr; border-right: none; }
-  .contract-balance-cell { border-right: none; padding-right: 0; border-bottom: 1px solid var(--line-soft); padding-bottom: 10px; }
-  .contract-balance-cell:last-child { border-bottom: none; padding-bottom: 0; }
+  .contract-balance-row { grid-template-columns: 1fr; }
   .status-chip { align-self: flex-start; }
 }
 
@@ -2676,31 +2665,11 @@
 }
 
 /* --- Member Since --- */
-.member-since {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin: 10px 0 0;
-  padding: 8px 14px;
-  border-radius: 10px;
-  background: rgba(99, 102, 241, 0.06);
-  border: 1px solid rgba(99, 102, 241, 0.18);
-  color: #d1fae5;
-  font-size: 12px;
-  font-weight: 600;
-  font-family: var(--display);
-}
-
-.member-since-label {
-  color: rgba(255, 255, 255, 0.5);
-  font: 500 0.72rem var(--mono);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.member-since-value {
-  color: var(--ink);
-  font: 700 13px var(--mono);
+.member-since-subtitle {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font: 500 13px var(--mono);
+  letter-spacing: 0.04em;
 }
 .action-panel {
   padding: 0;
