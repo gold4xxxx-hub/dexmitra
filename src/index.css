@@ -15,14 +15,14 @@ body, #root, .app-shell {
 
 :root {
   /* Canvas & surfaces — deep obsidian */
-  --canvas: #0B0E14;
-  --card: rgba(18, 24, 32, 0.75);
-  --card-inner: #131B27;
-  --card-raised: #16202E;
+  --canvas: #080A0E;
+  --card: rgba(18, 23, 33, 0.8);
+  --card-inner: #0F131E;
+  --card-raised: #121721;
   /* Text hierarchy */
   --ink: #FFFFFF;
-  --secondary: #94A3B8;
-  --muted: #64748B;
+  --secondary: #CBD5E1;
+  --muted: #94A3B8;
   /* Borders — crisp luxury hairlines */
   --line: rgba(255, 255, 255, 0.08);
   --line-strong: rgba(255, 255, 255, 0.15);
@@ -31,8 +31,9 @@ body, #root, .app-shell {
   --brand: #00F29D;
   --brand-deep: #00C480;
   --brand-glow: rgba(0, 242, 157, 0.25);
-  --brand-surface: rgba(0, 242, 157, 0.08);
-  --brand-border: rgba(0, 242, 157, 0.25);
+  --brand-surface: rgba(0, 242, 157, 0.06);
+  --brand-border: rgba(0, 242, 157, 0.20);
+  --brand-bg: rgba(0, 242, 157, 0.10);
   /* Semantic */
   --danger: #EF4444;
   --danger-bg: rgba(239, 68, 68, 0.10);
@@ -60,9 +61,9 @@ body {
   min-height: 100vh;
   background: var(--canvas);
   background-image:
-    radial-gradient(ellipse 80% 50% at 80% -10%, rgba(0, 242, 157, 0.05), transparent),
-    radial-gradient(ellipse 60% 40% at 20% 120%, rgba(0, 242, 157, 0.03), transparent),
-    radial-gradient(ellipse 50% 30% at 50% 50%, rgba(0, 242, 157, 0.02), transparent);
+    radial-gradient(ellipse 90% 60% at 90% -10%, rgba(0, 242, 157, 0.06), transparent),
+    radial-gradient(ellipse 70% 50% at 10% 130%, rgba(0, 242, 157, 0.04), transparent),
+    radial-gradient(ellipse 60% 40% at 50% 50%, rgba(0, 242, 157, 0.03), transparent);
   color: var(--ink);
   font-family: var(--display);
 }

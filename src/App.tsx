@@ -841,6 +841,7 @@ function App() {
                 <span className="menu-item-icon"><ExternalLink size={16} strokeWidth={1.8} /></span>
                 <span className="menu-item-label">Plans</span>
               </button>
+              <hr className="menu-divider" />
               <button type="button" className={`menu-item ${view === 'analytics' ? 'is-active' : ''}`} onClick={() => changeView('analytics')}>
                 <span className="menu-item-icon"><RefreshCw size={16} strokeWidth={1.8} /></span>
                 <span className="menu-item-label">Analytics</span>
@@ -849,6 +850,7 @@ function App() {
                 <span className="menu-item-icon"><Check size={16} strokeWidth={1.8} /></span>
                 <span className="menu-item-label">Activity</span>
               </button>
+              <hr className="menu-divider" />
               <button type="button" className={`menu-item ${view === 'account' ? 'is-active' : ''}`} onClick={() => changeView('account')}>
                 <span className="menu-item-icon"><Wallet size={16} strokeWidth={1.8} /></span>
                 <span className="menu-item-label">Account</span>
@@ -858,6 +860,13 @@ function App() {
                 <span className="menu-item-label">Referral</span>
               </button>
             </nav>
+            <div className="menu-footer">
+              <div className="brand-mark"><Landmark size={14} strokeWidth={2} /></div>
+              <div className="menu-footer-text">
+                <span className="menu-footer-label">dexmitra.</span>
+                <span className="menu-footer-value">BNB Mainnet · v1.0.0</span>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -874,27 +883,43 @@ function App() {
         </div>
 
         {view === 'dashboard' && <section id="contract-section" className="contract-strip reveal-on-scroll" aria-label="Contract address">
-          <span className="contract-label">Contract</span>
-          <code>{CONTRACT_ADDRESS}</code>
-          <button
-            type="button"
-            className={`contract-copy-btn ${copiedAddress ? 'copied' : ''}`}
-            onClick={() => {
-              navigator.clipboard.writeText(CONTRACT_ADDRESS).then(() => {
-                setCopiedAddress(true)
-                setTimeout(() => setCopiedAddress(false), 2000)
-              }).catch(() => {})
-            }}
-            aria-label="Copy contract address"
-            title="Copy contract address"
-          >
-            {copiedAddress ? <Check size={12} /> : <ExternalLink size={12} />}
-            {copiedAddress ? 'Copied!' : 'Copy'}
-          </button>
-          <a href={`https://bscscan.com/address/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer" aria-label="Open contract on BscScan"><ExternalLink size={13} /></a>
-          <span className="contract-balance"><span className="contract-label">Contract</span> USDT {prettyAmount(contractUsdtBalance ?? undefined, 18)} · GC {prettyAmount(contractGcBalance ?? undefined, 6)}</span>
-          {account && <span className="wallet-balance"><span className="contract-label">Your wallet</span> USDT {prettyAmount(walletUsdtBalance ?? undefined, 18)} · GC {prettyAmount(walletGcBalance ?? undefined, 6)}</span>}
-          <span className={`status-chip ${terms?.paused ? 'is-paused' : 'is-live'}`}><span />{terms?.paused ? 'Paused' : 'Contract active'}</span>
+          <div className="contract-row">
+            <div className="contract-left">
+              <span className="contract-label">Contract</span>
+              <code>{CONTRACT_ADDRESS}</code>
+              <a href={`https://bscscan.com/address/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer" aria-label="Open contract on BscScan"><ExternalLink size={12} /></a>
+            </div>
+            <div className="contract-right">
+              <button
+                type="button"
+                className={`contract-copy-btn ${copiedAddress ? 'copied' : ''}`}
+                onClick={() => {
+                  navigator.clipboard.writeText(CONTRACT_ADDRESS).then(() => {
+                    setCopiedAddress(true)
+                    setTimeout(() => setCopiedAddress(false), 2000)
+                  }).catch(() => {})
+                }}
+                aria-label="Copy contract address"
+                title="Copy contract address"
+              >
+                {copiedAddress ? <Check size={12} /> : <ExternalLink size={12} />}
+                {copiedAddress ? 'Copied!' : 'Copy'}
+              </button>
+              <span className={`status-chip ${terms?.paused ? 'is-paused' : 'is-live'}`}><span />{terms?.paused ? 'Paused' : 'Contract active'}</span>
+            </div>
+          </div>
+          <div className="contract-balance-row">
+            <div className="contract-balance-cell">
+              <span className="contract-balance-label">Contract Liquidity</span>
+              <span className="contract-balance-value">USDT {prettyAmount(contractUsdtBalance ?? undefined, 18)} · GC {prettyAmount(contractGcBalance ?? undefined, 6)}</span>
+            </div>
+            {account && (
+              <div className="contract-balance-cell">
+                <span className="contract-balance-label">Your Wallet</span>
+                <span className="contract-balance-value">USDT {prettyAmount(walletUsdtBalance ?? undefined, 18)} · GC {prettyAmount(walletGcBalance ?? undefined, 6)}</span>
+              </div>
+            )}
+          </div>
         </section>}
 
         {account && summary && (
