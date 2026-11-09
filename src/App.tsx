@@ -231,7 +231,7 @@ function App() {
         ])
         if (!active) return
         setTerms({ minInvest, maxInvest, registrationFee, multiplierBps: config[0], roiBps: config[1], minDirects: config[2], paused, plans: [plan2x, plan3x, plan25x], unit })
-        setPlan((current) => current === '0' ? String(plan2x) : current)
+        setPlan((current) => current === '0' ? String(plan25x) : current)
 
         if (account) {
           const [user, page] = await Promise.all([
