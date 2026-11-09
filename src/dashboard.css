@@ -1524,6 +1524,17 @@
   overflow-wrap: anywhere;
 }
 
+.admin-description {
+  margin: 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.admin-pause-card {
+  margin-bottom: 14px;
+}
+
 .admin-warning {
   display: flex;
   align-items: flex-start;
@@ -1565,10 +1576,11 @@
 }
 
 .admin-form input,
-.admin-form select {
+.admin-form select,
+.admin-form textarea {
   width: 100%;
   min-width: 0;
-  height: 42px;
+  min-height: 42px;
   padding: 0 12px;
   border: 1px solid var(--line);
   border-radius: 9px;
@@ -1580,13 +1592,20 @@
 }
 
 .admin-form input:focus,
-.admin-form select:focus {
+.admin-form select:focus,
+.admin-form textarea:focus {
   border-color: var(--brand);
   box-shadow: var(--shadow-focus);
 }
 
-.admin-form input::placeholder {
+.admin-form input::placeholder,
+.admin-form textarea::placeholder {
   color: var(--muted);
+}
+
+.admin-form textarea {
+  padding: 10px 12px;
+  resize: vertical;
 }
 
 .admin-form .submit-button {

@@ -10,6 +10,7 @@ export const PAYMENT_TOKENS = [
 
 export const contractAbi = [
   { type: 'function', name: 'owner', stateMutability: 'view', inputs: [], outputs: [{ name: '', type: 'address' }] },
+  { type: 'function', name: 'pendingOwner', stateMutability: 'view', inputs: [], outputs: [{ name: '', type: 'address' }] },
   { type: 'function', name: 'allowedToken', stateMutability: 'view', inputs: [{ name: 'token', type: 'address' }], outputs: [{ name: '', type: 'bool' }] },
   { type: 'function', name: 'tokenDecimals', stateMutability: 'view', inputs: [{ name: 'token', type: 'address' }], outputs: [{ name: '', type: 'uint8' }] },
   { type: 'function', name: 'UNIT', stateMutability: 'view', inputs: [], outputs: [{ name: '', type: 'uint256' }] },
@@ -33,9 +34,26 @@ export const contractAbi = [
   { type: 'function', name: 'upgradePlan', stateMutability: 'nonpayable', inputs: [{ name: 'plan', type: 'uint8' }], outputs: [] },
   { type: 'function', name: 'setToken', stateMutability: 'nonpayable', inputs: [{ name: 'token', type: 'address' }, { name: 'allowed', type: 'bool' }], outputs: [] },
   { type: 'function', name: 'setBlocked', stateMutability: 'nonpayable', inputs: [{ name: 'user', type: 'address' }, { name: 'blocked', type: 'bool' }], outputs: [] },
+  { type: 'function', name: 'setBlockedBatch', stateMutability: 'nonpayable', inputs: [{ name: 'users', type: 'address[]' }, { name: 'blocked', type: 'bool' }], outputs: [] },
+  { type: 'function', name: 'setRegistrationFee', stateMutability: 'nonpayable', inputs: [{ name: 'newFee', type: 'uint256' }], outputs: [] },
+  { type: 'function', name: 'setDirectIncome', stateMutability: 'nonpayable', inputs: [{ name: 'newDirect', type: 'uint256' }], outputs: [] },
+  { type: 'function', name: 'setInvestLimits', stateMutability: 'nonpayable', inputs: [{ name: 'newMin', type: 'uint256' }, { name: 'newMax', type: 'uint256' }], outputs: [] },
+  { type: 'function', name: 'setReinvestLimits', stateMutability: 'nonpayable', inputs: [{ name: 'newMin', type: 'uint256' }, { name: 'newMax', type: 'uint256' }], outputs: [] },
+  { type: 'function', name: 'setReinvestFeeBps', stateMutability: 'nonpayable', inputs: [{ name: 'newFeeBps', type: 'uint256' }], outputs: [] },
+  { type: 'function', name: 'setWithdrawCooldown', stateMutability: 'nonpayable', inputs: [{ name: 'newCooldown', type: 'uint256' }], outputs: [] },
   { type: 'function', name: 'setRoiRate', stateMutability: 'nonpayable', inputs: [{ name: 'plan', type: 'uint8' }, { name: 'bpsPerMonth', type: 'uint256' }], outputs: [] },
   { type: 'function', name: 'setPlanMultiplier', stateMutability: 'nonpayable', inputs: [{ name: 'plan', type: 'uint8' }, { name: 'multiplierBps', type: 'uint256' }], outputs: [] },
   { type: 'function', name: 'setPlanMinDirects', stateMutability: 'nonpayable', inputs: [{ name: 'plan', type: 'uint8' }, { name: 'directs', type: 'uint256' }], outputs: [] },
+  { type: 'function', name: 'setLevelPercent', stateMutability: 'nonpayable', inputs: [{ name: 'level', type: 'uint8' }, { name: 'bps', type: 'uint256' }], outputs: [] },
+  { type: 'function', name: 'setLevelPercentBatch', stateMutability: 'nonpayable', inputs: [{ name: 'levels', type: 'uint8[]' }, { name: 'bpsValues', type: 'uint256[]' }], outputs: [] },
+  { type: 'function', name: 'setLevelDailyCap', stateMutability: 'nonpayable', inputs: [{ name: 'cap', type: 'uint256' }], outputs: [] },
+  { type: 'function', name: 'pause', stateMutability: 'nonpayable', inputs: [], outputs: [] },
+  { type: 'function', name: 'unpause', stateMutability: 'nonpayable', inputs: [], outputs: [] },
+  { type: 'function', name: 'transferOwnership', stateMutability: 'nonpayable', inputs: [{ name: 'newOwner', type: 'address' }], outputs: [] },
+  { type: 'function', name: 'acceptOwnership', stateMutability: 'nonpayable', inputs: [], outputs: [] },
+  { type: 'function', name: 'addLiquidity', stateMutability: 'nonpayable', inputs: [{ name: 'token', type: 'address' }, { name: 'amount', type: 'uint256' }], outputs: [] },
+  { type: 'function', name: 'withdrawTreasury', stateMutability: 'nonpayable', inputs: [{ name: 'token', type: 'address' }, { name: 'to', type: 'address' }, { name: 'amount', type: 'uint256' }], outputs: [] },
+  { type: 'function', name: 'recoverToken', stateMutability: 'nonpayable', inputs: [{ name: 'token', type: 'address' }, { name: 'to', type: 'address' }, { name: 'rawAmount', type: 'uint256' }], outputs: [] },
 ] as const satisfies Abi
 
 export const erc20Abi = [

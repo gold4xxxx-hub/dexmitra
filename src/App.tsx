@@ -131,6 +131,12 @@ function readableError(error: unknown) {
   return 'The request could not be completed.'
 }
 
+function adminField(values: Record<string, FormDataEntryValue>, name: string) {
+  const value = values[name]
+  if (typeof value !== 'string' || value.trim() === '') throw new Error(`Enter a value for ${name}.`)
+  return value.trim()
+}
+
 /* Animated counter: counts from 0 to target over ~1.2s with ease-out */
 function formatJoinedAt(ts: bigint) {
   return new Date(Number(ts) * 1000).toLocaleDateString(undefined, {
@@ -180,6 +186,7 @@ function App() {
   const [investments, setInvestments] = useState<Investment[]>([])
   const [terms, setTerms] = useState<ContractTerms | null>(null)
   const [contractOwner, setContractOwner] = useState<Address | null>(null)
+  const [pendingContractOwner, setPendingContractOwner] = useState<Address | null>(null)
   const [ownerLookupError, setOwnerLookupError] = useState('')
   const [adminTokenAddress, setAdminTokenAddress] = useState('')
   const [adminTokenAllowed, setAdminTokenAllowed] = useState('true')
@@ -273,14 +280,28 @@ function App() {
       setOwnerLookupError('')
       if (!account) return
       try {
-        const owner = await publicClient.readContract({
-          address: CONTRACT_ADDRESS,
-          abi: contractAbi,
-          functionName: 'owner',
-        })
-        if (active) setContractOwner(owner)
+        const [owner, pendingOwner] = await Promise.all([
+          publicClient.readContract({
+            address: CONTRACT_ADDRESS,
+            abi: contractAbi,
+            functionName: 'owner',
+          }),
+          publicClient.readContract({
+            address: CONTRACT_ADDRESS,
+            abi: contractAbi,
+            functionName: 'pendingOwner',
+          }),
+        ])
+        if (active) {
+          setContractOwner(owner)
+          setPendingContractOwner(pendingOwner)
+        }
       } catch (ownerError) {
-        if (active) setOwnerLookupError(`Could not verify contract ownership: ${readableError(ownerError)}`)
+        if (active) {
+          setContractOwner(null)
+          setPendingContractOwner(null)
+          setOwnerLookupError(`Could not verify contract ownership: ${readableError(ownerError)}`)
+        }
       }
     }
     void loadOwner()
@@ -527,22 +548,28 @@ function App() {
 
   async function submitAdminAction(
     event: React.FormEvent<HTMLFormElement>,
-    write: (client: Awaited<ReturnType<typeof walletClient>>) => Promise<`0x${string}`>,
+    write: (
+      client: Awaited<ReturnType<typeof walletClient>>,
+      values: Record<string, FormDataEntryValue>,
+    ) => Promise<`0x${string}`>,
+    permission: 'owner' | 'pendingOwner' = 'owner',
   ) {
     event.preventDefault()
+    const values = Object.fromEntries(new FormData(event.currentTarget).entries())
     setAdminBusy(true)
     setError('')
     setNotice('')
     setTxHash('')
     try {
-      if (!account || account.toLowerCase() !== ADMIN_WALLET_ADDRESS.toLowerCase()) {
-        throw new Error('Connect the configured admin wallet to use admin controls.')
-      }
-      if (!contractOwner || account.toLowerCase() !== contractOwner.toLowerCase()) {
-        throw new Error('The configured admin wallet does not match the contract owner. Verify the deployed contract owner before continuing.')
+      if (!account) throw new Error('Connect an admin wallet before sending a transaction.')
+      const expectedAdmin = permission === 'owner' ? contractOwner : pendingContractOwner
+      if (!expectedAdmin || account.toLowerCase() !== expectedAdmin.toLowerCase()) {
+        throw new Error(permission === 'owner'
+          ? 'Connect the contract’s current owner wallet to use this control.'
+          : 'Connect the pending owner wallet to accept ownership.')
       }
       const client = await walletClient()
-      const hash = await write(client)
+      const hash = await write(client, values)
       setTxHash(hash)
       setNotice('Admin transaction submitted. Waiting for BNB Smart Chain confirmation...')
       await publicClient.waitForTransactionReceipt({ hash })
@@ -585,7 +612,8 @@ function App() {
     (action === 'upgrade' && !upgradeReady) ||
     (action === 'withdraw' && withdrawCooldownRemaining > 0)
   const isConfiguredAdmin = Boolean(account && account.toLowerCase() === ADMIN_WALLET_ADDRESS.toLowerCase())
-  const isContractOwner = Boolean(isConfiguredAdmin && contractOwner && account?.toLowerCase() === contractOwner.toLowerCase())
+  const isContractOwner = Boolean(account && contractOwner && account.toLowerCase() === contractOwner.toLowerCase())
+  const isPendingContractOwner = Boolean(account && pendingContractOwner && account.toLowerCase() === pendingContractOwner.toLowerCase())
 
   return (
     <div className="app-shell">
@@ -638,7 +666,7 @@ function App() {
         {error && <div className="feedback error-feedback" role="alert"><BadgeAlert size={16} /><span>{error}</span><button type="button" onClick={() => setError('')} aria-label="Dismiss"><span aria-hidden="true">×</span></button></div>}
         {notice && <div className="feedback success-feedback" role="status"><Check size={16} /><span>{notice} {txHash && <a href={`https://bscscan.com/tx/${txHash}`} target="_blank" rel="noreferrer">View transaction <ExternalLink size={12} /></a>}</span></div>}
 
-        {account && isConfiguredAdmin && (
+        {account && (isConfiguredAdmin || isContractOwner || isPendingContractOwner) && (
           <section className="data-section admin-section" aria-label="Contract administration">
             <div className="section-heading">
               <div>
@@ -646,13 +674,22 @@ function App() {
                 <h2>Contract administration</h2>
               </div>
               <span className={`status-chip ${isContractOwner ? 'is-live' : 'is-paused'}`}>
-                <span />{isContractOwner ? 'Owner wallet verified' : 'Owner verification required'}
+                <span />{isContractOwner ? 'Owner wallet verified' : isPendingContractOwner ? 'Pending owner' : 'Owner verification required'}
               </span>
             </div>
             {isContractOwner ? (
               <>
-                <p className="admin-owner">Connected owner: <code>{contractOwner}</code></p>
+                <p className="admin-owner">Connected owner: <code>{contractOwner}</code> · Configured admin: <code>{ADMIN_WALLET_ADDRESS}</code></p>
                 <p className="admin-warning"><ShieldAlert size={14} /> Changes are on-chain and irreversible. Contract owner checks remain authoritative.</p>
+                <form className="admin-card admin-form admin-pause-card" onSubmit={(event) => void submitAdminAction(event, (client) => client.writeContract({
+                  address: CONTRACT_ADDRESS,
+                  abi: contractAbi,
+                  functionName: terms?.paused ? 'unpause' : 'pause',
+                }))}>
+                  <h3>Contract availability</h3>
+                  <p className="admin-description">Current status: {terms?.paused ? 'Paused' : 'Active'}. Pausing blocks user transactions.</p>
+                  <button className="submit-button" type="submit" disabled={adminBusy || !terms}>{terms?.paused ? 'Unpause contract' : 'Pause contract'}</button>
+                </form>
                 <div className="admin-grid">
                   <form className="admin-card admin-form" onSubmit={(event) => void submitAdminAction(event, async (client) => {
                     if (!isAddress(adminTokenAddress)) throw new Error('Enter a valid token address.')
@@ -749,12 +786,241 @@ function App() {
                     <input id="admin-upgrade-directs" type="number" min="0" step="1" value={adminUpgradeDirects} onChange={(event) => setAdminUpgradeDirects(event.target.value)} placeholder={terms?.minDirects[2]?.toString() ?? '10'} required />
                     <button className="submit-button" type="submit" disabled={adminBusy}>Update threshold</button>
                   </form>
+
+                  <form className="admin-card admin-form" onSubmit={(event) => void submitAdminAction(event, (client, values) => {
+                    const fee = parseUnits(adminField(values, 'Registration fee (18-decimal units)'), 18)
+                    return client.writeContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'setRegistrationFee', args: [fee] })
+                  })}>
+                    <h3>Registration fee</h3>
+                    <label className="field-label" htmlFor="admin-registration-fee">Fee (18-decimal units)</label>
+                    <input id="admin-registration-fee" name="Registration fee (18-decimal units)" type="number" min="0.000000000000000001" step="any" placeholder="50" required />
+                    <button className="submit-button" type="submit" disabled={adminBusy}>Update registration fee</button>
+                  </form>
+
+                  <form className="admin-card admin-form" onSubmit={(event) => void submitAdminAction(event, (client, values) => {
+                    const income = parseUnits(adminField(values, 'Direct income (18-decimal units)'), 18)
+                    return client.writeContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'setDirectIncome', args: [income] })
+                  })}>
+                    <h3>Direct referral income</h3>
+                    <label className="field-label" htmlFor="admin-direct-income">Amount (18-decimal units)</label>
+                    <input id="admin-direct-income" name="Direct income (18-decimal units)" type="number" min="0" step="any" placeholder="40" required />
+                    <button className="submit-button" type="submit" disabled={adminBusy}>Update direct income</button>
+                  </form>
+
+                  <form className="admin-card admin-form" onSubmit={(event) => void submitAdminAction(event, (client, values) => {
+                    const min = parseUnits(adminField(values, 'Minimum investment'), 18)
+                    const max = parseUnits(adminField(values, 'Maximum investment'), 18)
+                    if (min <= 0n || max < min) throw new Error('Investment maximum must be greater than or equal to a positive minimum.')
+                    return client.writeContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'setInvestLimits', args: [min, max] })
+                  })}>
+                    <h3>Investment limits</h3>
+                    <label className="field-label" htmlFor="admin-invest-min">Minimum (18-decimal units)</label>
+                    <input id="admin-invest-min" name="Minimum investment" type="number" min="0" step="any" placeholder="100" required />
+                    <label className="field-label" htmlFor="admin-invest-max">Maximum (18-decimal units)</label>
+                    <input id="admin-invest-max" name="Maximum investment" type="number" min="0" step="any" placeholder="100000" required />
+                    <button className="submit-button" type="submit" disabled={adminBusy}>Update investment limits</button>
+                  </form>
+
+                  <form className="admin-card admin-form" onSubmit={(event) => void submitAdminAction(event, (client, values) => {
+                    const min = parseUnits(adminField(values, 'Minimum reinvestment'), 18)
+                    const max = parseUnits(adminField(values, 'Maximum reinvestment'), 18)
+                    if (min <= 0n || max < min) throw new Error('Reinvestment maximum must be greater than or equal to a positive minimum.')
+                    return client.writeContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'setReinvestLimits', args: [min, max] })
+                  })}>
+                    <h3>Reinvestment limits</h3>
+                    <label className="field-label" htmlFor="admin-reinvest-min">Minimum (18-decimal units)</label>
+                    <input id="admin-reinvest-min" name="Minimum reinvestment" type="number" min="0" step="any" placeholder="300" required />
+                    <label className="field-label" htmlFor="admin-reinvest-max">Maximum (18-decimal units)</label>
+                    <input id="admin-reinvest-max" name="Maximum reinvestment" type="number" min="0" step="any" placeholder="99999" required />
+                    <button className="submit-button" type="submit" disabled={adminBusy}>Update reinvestment limits</button>
+                  </form>
+
+                  <form className="admin-card admin-form" onSubmit={(event) => void submitAdminAction(event, (client, values) => {
+                    const fee = BigInt(adminField(values, 'Reinvest fee in basis points'))
+                    if (fee > 1_000n) throw new Error('Reinvest fee must be at most 1000 basis points (10%).')
+                    return client.writeContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'setReinvestFeeBps', args: [fee] })
+                  })}>
+                    <h3>Reinvest fee</h3>
+                    <label className="field-label" htmlFor="admin-reinvest-fee">Fee (basis points; max 1000)</label>
+                    <input id="admin-reinvest-fee" name="Reinvest fee in basis points" type="number" min="0" max="1000" step="1" placeholder="100" required />
+                    <button className="submit-button" type="submit" disabled={adminBusy}>Update reinvest fee</button>
+                  </form>
+
+                  <form className="admin-card admin-form" onSubmit={(event) => void submitAdminAction(event, (client, values) => {
+                    const seconds = BigInt(adminField(values, 'Withdrawal cooldown in seconds'))
+                    return client.writeContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'setWithdrawCooldown', args: [seconds] })
+                  })}>
+                    <h3>Withdrawal cooldown</h3>
+                    <label className="field-label" htmlFor="admin-withdraw-cooldown">Cooldown (seconds)</label>
+                    <input id="admin-withdraw-cooldown" name="Withdrawal cooldown in seconds" type="number" min="0" step="1" placeholder="864000" required />
+                    <button className="submit-button" type="submit" disabled={adminBusy}>Update cooldown</button>
+                  </form>
+
+                  <form className="admin-card admin-form" onSubmit={(event) => void submitAdminAction(event, (client, values) => {
+                    const level = BigInt(adminField(values, 'Level number'))
+                    const bps = BigInt(adminField(values, 'Level percentage in basis points'))
+                    if (level < 1n || level > 15n || bps > 5_000n) throw new Error('Level must be 1–15 and percentage at most 5000 basis points (50%).')
+                    return client.writeContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'setLevelPercent', args: [Number(level), bps] })
+                  })}>
+                    <h3>Level percentage</h3>
+                    <label className="field-label" htmlFor="admin-level-number">Level (1–15)</label>
+                    <input id="admin-level-number" name="Level number" type="number" min="1" max="15" step="1" placeholder="1" required />
+                    <label className="field-label" htmlFor="admin-level-bps">Percentage (basis points)</label>
+                    <input id="admin-level-bps" name="Level percentage in basis points" type="number" min="0" max="5000" step="1" placeholder="1300 = 13%" required />
+                    <button className="submit-button" type="submit" disabled={adminBusy}>Update level percentage</button>
+                  </form>
+
+                  <form className="admin-card admin-form" onSubmit={(event) => void submitAdminAction(event, (client, values) => {
+                    const levels = adminField(values, 'Levels (comma-separated)').split(',').map((value) => value.trim())
+                    const percentages = adminField(values, 'Percentages (comma-separated basis points)').split(',').map((value) => value.trim())
+                    if (levels.length !== percentages.length || levels.some((value) => !/^\d+$/.test(value)) || percentages.some((value) => !/^\d+$/.test(value))) {
+                      throw new Error('Enter matching comma-separated whole-number lists for levels and basis-point percentages.')
+                    }
+                    const levelNumbers = levels.map(Number)
+                    const bpsValues = percentages.map(BigInt)
+                    if (levelNumbers.some((level) => level < 1 || level > 15) || bpsValues.some((bps) => bps > 5_000n)) {
+                      throw new Error('Levels must be 1–15 and percentages at most 5000 basis points (50%).')
+                    }
+                    return client.writeContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'setLevelPercentBatch', args: [levelNumbers, bpsValues] })
+                  })}>
+                    <h3>Batch level percentages</h3>
+                    <label className="field-label" htmlFor="admin-level-batch-levels">Levels (comma-separated)</label>
+                    <input id="admin-level-batch-levels" name="Levels (comma-separated)" placeholder="1,2,3" required />
+                    <label className="field-label" htmlFor="admin-level-batch-bps">Percentages (basis points)</label>
+                    <input id="admin-level-batch-bps" name="Percentages (comma-separated basis points)" placeholder="1300,700,400" required />
+                    <button className="submit-button" type="submit" disabled={adminBusy}>Update level percentages</button>
+                  </form>
+
+                  <form className="admin-card admin-form" onSubmit={(event) => void submitAdminAction(event, (client, values) => {
+                    const cap = parseUnits(adminField(values, 'Daily level cap (18-decimal units)'), 18)
+                    return client.writeContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'setLevelDailyCap', args: [cap] })
+                  })}>
+                    <h3>Daily level income cap</h3>
+                    <label className="field-label" htmlFor="admin-level-daily-cap">Cap (18-decimal units)</label>
+                    <input id="admin-level-daily-cap" name="Daily level cap (18-decimal units)" type="number" min="0" step="any" placeholder="20" required />
+                    <button className="submit-button" type="submit" disabled={adminBusy}>Update daily cap</button>
+                  </form>
+
+                  <form className="admin-card admin-form" onSubmit={(event) => void submitAdminAction(event, async (client, values) => {
+                    const addresses = adminField(values, 'User addresses (comma-separated)').split(',').map((value) => value.trim())
+                    if (addresses.length === 0 || addresses.some((address) => !isAddress(address))) throw new Error('Enter valid comma-separated user addresses.')
+                    return client.writeContract({
+                      address: CONTRACT_ADDRESS,
+                      abi: contractAbi,
+                      functionName: 'setBlockedBatch',
+                      args: [addresses.map(getAddress), values['New status'] === 'true'],
+                    })
+                  })}>
+                    <h3>Batch user access</h3>
+                    <label className="field-label" htmlFor="admin-batch-users">Addresses (comma-separated)</label>
+                    <textarea id="admin-batch-users" name="User addresses (comma-separated)" rows={3} placeholder="0x…, 0x…" required />
+                    <label className="field-label" htmlFor="admin-batch-status">New status</label>
+                    <select id="admin-batch-status" name="New status" defaultValue="true"><option value="true">Block users</option><option value="false">Unblock users</option></select>
+                    <button className="submit-button" type="submit" disabled={adminBusy}>Update user access batch</button>
+                  </form>
+
+                  <form className="admin-card admin-form" onSubmit={(event) => void submitAdminAction(event, (client, values) => {
+                    const newOwner = adminField(values, 'New owner address')
+                    if (!isAddress(newOwner) || getAddress(newOwner) === ZERO_REFERRER) throw new Error('Enter a valid, non-zero pending owner address.')
+                    return client.writeContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'transferOwnership', args: [getAddress(newOwner)] })
+                  })}>
+                    <h3>Transfer ownership</h3>
+                    <p className="admin-description">Two-step transfer: the new owner must connect and accept before ownership changes.</p>
+                    <label className="field-label" htmlFor="admin-new-owner">New owner address</label>
+                    <input id="admin-new-owner" name="New owner address" placeholder="0x…" spellCheck={false} required />
+                    <button className="submit-button" type="submit" disabled={adminBusy}>Propose new owner</button>
+                  </form>
+
+                  <form className="admin-card admin-form" onSubmit={(event) => void submitAdminAction(event, async (client, values) => {
+                    const tokenInput = adminField(values, 'Liquidity token address')
+                    if (!isAddress(tokenInput)) throw new Error('Enter a valid token address.')
+                    const token = getAddress(tokenInput)
+                    const amountInternal = parseUnits(adminField(values, 'Liquidity amount (18-decimal units)'), 18)
+                    if (amountInternal <= 0n) throw new Error('Liquidity amount must be greater than zero.')
+                    const allowed = await publicClient.readContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'allowedToken', args: [token] })
+                    if (!allowed) throw new Error('Allow this token in Payment tokens before adding liquidity.')
+                    const decimals = Number(await publicClient.readContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'tokenDecimals', args: [token] }))
+                    const factor = 10n ** BigInt(Math.abs(18 - decimals))
+                    if ((decimals < 18 && amountInternal % factor !== 0n) || (decimals > 18 && amountInternal % factor !== 0n)) {
+                      throw new Error(`Amount cannot be represented exactly with ${decimals} token decimals.`)
+                    }
+                    const rawAmount = decimals < 18 ? amountInternal / factor : decimals > 18 ? amountInternal * factor : amountInternal
+                    const allowance = await publicClient.readContract({ address: token, abi: erc20Abi, functionName: 'allowance', args: [account!, CONTRACT_ADDRESS] })
+                    if (allowance < rawAmount) {
+                      const approvalHash = await client.writeContract({ address: token, abi: erc20Abi, functionName: 'approve', args: [CONTRACT_ADDRESS, rawAmount] })
+                      setTxHash(approvalHash)
+                      setNotice('Liquidity approval submitted. Waiting for confirmation...')
+                      await publicClient.waitForTransactionReceipt({ hash: approvalHash })
+                    }
+                    return client.writeContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'addLiquidity', args: [token, amountInternal] })
+                  })}>
+                    <h3>Add payout liquidity</h3>
+                    <label className="field-label" htmlFor="admin-liquidity-token">Allowed token address</label>
+                    <input id="admin-liquidity-token" name="Liquidity token address" placeholder="0x…" spellCheck={false} required />
+                    <label className="field-label" htmlFor="admin-liquidity-amount">Amount (18-decimal units)</label>
+                    <input id="admin-liquidity-amount" name="Liquidity amount (18-decimal units)" type="number" min="0" step="any" required />
+                    <p className="admin-description">Requires a token approval followed by the liquidity transaction.</p>
+                    <button className="submit-button" type="submit" disabled={adminBusy}>Approve and add liquidity</button>
+                  </form>
+
+                  <form className="admin-card admin-form" onSubmit={(event) => void submitAdminAction(event, (client, values) => {
+                    const token = adminField(values, 'Treasury token address')
+                    const recipient = adminField(values, 'Treasury recipient address')
+                    if (!isAddress(token) || !isAddress(recipient) || getAddress(recipient) === ZERO_REFERRER) throw new Error('Enter valid token and non-zero recipient addresses.')
+                    const amount = parseUnits(adminField(values, 'Treasury amount (18-decimal units)'), 18)
+                    if (amount <= 0n) throw new Error('Treasury amount must be greater than zero.')
+                    return client.writeContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'withdrawTreasury', args: [getAddress(token), getAddress(recipient), amount] })
+                  })}>
+                    <h3>Withdraw treasury fees</h3>
+                    <label className="field-label" htmlFor="admin-treasury-token">Allowed token address</label>
+                    <input id="admin-treasury-token" name="Treasury token address" placeholder="0x…" spellCheck={false} required />
+                    <label className="field-label" htmlFor="admin-treasury-recipient">Recipient address</label>
+                    <input id="admin-treasury-recipient" name="Treasury recipient address" placeholder="0x…" spellCheck={false} required />
+                    <label className="field-label" htmlFor="admin-treasury-amount">Amount (18-decimal units)</label>
+                    <input id="admin-treasury-amount" name="Treasury amount (18-decimal units)" type="number" min="0" step="any" required />
+                    <p className="admin-description">The contract enforces treasury and liquidity limits.</p>
+                    <button className="submit-button" type="submit" disabled={adminBusy}>Withdraw treasury</button>
+                  </form>
+
+                  <form className="admin-card admin-form" onSubmit={(event) => void submitAdminAction(event, async (client, values) => {
+                    const tokenInput = adminField(values, 'Recovery token address')
+                    const recipient = adminField(values, 'Recovery recipient address')
+                    if (!isAddress(tokenInput) || !isAddress(recipient) || getAddress(recipient) === ZERO_REFERRER) throw new Error('Enter valid token and non-zero recipient addresses.')
+                    const token = getAddress(tokenInput)
+                    const decimals = Number(await publicClient.readContract({ address: token, abi: erc20Abi, functionName: 'decimals' }))
+                    const rawAmount = parseUnits(adminField(values, 'Recovery amount in token units'), decimals)
+                    if (rawAmount <= 0n) throw new Error('Recovery amount must be greater than zero.')
+                    return client.writeContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'recoverToken', args: [token, getAddress(recipient), rawAmount] })
+                  })}>
+                    <h3>Recover untracked token</h3>
+                    <label className="field-label" htmlFor="admin-recovery-token">Token address</label>
+                    <input id="admin-recovery-token" name="Recovery token address" placeholder="0x…" spellCheck={false} required />
+                    <label className="field-label" htmlFor="admin-recovery-recipient">Recipient address</label>
+                    <input id="admin-recovery-recipient" name="Recovery recipient address" placeholder="0x…" spellCheck={false} required />
+                    <label className="field-label" htmlFor="admin-recovery-amount">Amount (token units)</label>
+                    <input id="admin-recovery-amount" name="Recovery amount in token units" type="number" min="0" step="any" required />
+                    <p className="admin-description">Only works for tokens not whitelisted for payments.</p>
+                    <button className="submit-button" type="submit" disabled={adminBusy}>Recover token</button>
+                  </form>
                 </div>
+              </>
+            ) : isPendingContractOwner ? (
+              <>
+                <p className="admin-owner">Pending ownership for: <code>{pendingContractOwner}</code></p>
+                <p className="admin-warning"><ShieldAlert size={14} /> Accepting ownership makes this wallet responsible for owner-only contract controls.</p>
+                <form className="admin-card admin-form" onSubmit={(event) => void submitAdminAction(event, (client) => client.writeContract({
+                  address: CONTRACT_ADDRESS,
+                  abi: contractAbi,
+                  functionName: 'acceptOwnership',
+                }), 'pendingOwner')}>
+                  <h3>Accept ownership</h3>
+                  <button className="submit-button" type="submit" disabled={adminBusy}>Accept contract ownership</button>
+                </form>
               </>
             ) : (
               <p className="admin-error" role="alert">
                 {ownerLookupError || (contractOwner
-                  ? `Configured admin wallet ${ADMIN_WALLET_ADDRESS} does not match the contract owner ${contractOwner}.`
+                  ? `Configured admin wallet ${ADMIN_WALLET_ADDRESS} is not the current contract owner (${contractOwner}).`
                   : 'Checking configured admin wallet against the on-chain contract owner…')}
               </p>
             )}
