@@ -518,8 +518,9 @@ function App() {
       } else if (action === 'invest') {
         if (!token || !amount) throw new Error('Enter an amount and a valid payment token.')
         const value = parseUnits(amount, tokenDecimals)
-        const minInvest = terms.minInvest / tokenScale
+        const minInvest = minimumInvestment / tokenScale
         const maxInvest = terms.maxInvest / tokenScale
+        if (minInvest > maxInvest) throw new Error('The configured maximum investment is below this app’s 10,000-unit minimum.')
         if (value < minInvest || value > maxInvest) throw new Error(`Amount must be between ${prettyAmount(minInvest, tokenDecimals)} and ${prettyAmount(maxInvest, tokenDecimals)} ${tokenSymbol}.`)
         await approveToken(value)
         hash = await client.writeContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'invest', args: [parseUnits(amount, 18), token] })
@@ -595,6 +596,11 @@ function App() {
   const planRows = [...eligiblePlans]
   const unitDecimals = terms?.unit.toString().length ? terms.unit.toString().length - 1 : 18
   const tokenScale = 10n ** BigInt(Math.max(0, 18 - tokenDecimals))
+  const minimumInvestment = terms
+    ? terms.minInvest > 10_000n * terms.unit
+      ? terms.minInvest
+      : 10_000n * terms.unit
+    : 10_000n * 10n ** 18n
   const selectedTab = (next: Action) => {
     setAction(next)
     setNotice('')
@@ -1554,8 +1560,8 @@ function App() {
                 {['invest', 'withdraw', 'reinvest'].includes(action) && (
                   <>
                     <label className="field-label" htmlFor="amount">Amount</label>
-                    <div className="amount-wrap"><input id="amount" type="number" min="0" step="any" inputMode="decimal" value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="0.00" required /><span>{action === 'reinvest' ? 'units' : tokenSymbol}</span></div>
-                    {action === 'invest' && terms && <p className="form-hint">Range: {prettyAmount(terms.minInvest / tokenScale, tokenDecimals)} to {prettyAmount(terms.maxInvest / tokenScale, tokenDecimals)} {tokenSymbol}</p>}
+                    <div className="amount-wrap"><input id="amount" type="number" min={action === 'invest' ? formatUnits(minimumInvestment / tokenScale, tokenDecimals) : '0'} step="any" inputMode="decimal" value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="0.00" required /><span>{action === 'reinvest' ? 'units' : tokenSymbol}</span></div>
+                    {action === 'invest' && terms && <p className="form-hint">Range: {prettyAmount(minimumInvestment / tokenScale, tokenDecimals)} to {prettyAmount(terms.maxInvest / tokenScale, tokenDecimals)} {tokenSymbol}. Minimum is 10,000 units in this app; the contract minimum may be higher.</p>}
                     {action === 'withdraw' && (
                       <>
                         <p className="form-hint">Available: {prettyAmount(summary?.withdrawable, unitDecimals)} contract units</p>
