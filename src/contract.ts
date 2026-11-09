@@ -1,6 +1,7 @@
 import type { Abi, Address } from 'viem'
 
 export const CONTRACT_ADDRESS = '0x47be6b78dC569764d474515e177109Ba67D3c123' as Address
+export const ADMIN_WALLET_ADDRESS = '0xA0fedfbfe186C90aB5a4CBb5Db1c704d72369746' as Address
 
 export const PAYMENT_TOKENS = [
   { symbol: 'USDT', name: 'Tether USD', address: '0x55d398326f99059ff775485246999027b3197955' as Address },
@@ -8,6 +9,7 @@ export const PAYMENT_TOKENS = [
 ] as const
 
 export const contractAbi = [
+  { type: 'function', name: 'owner', stateMutability: 'view', inputs: [], outputs: [{ name: '', type: 'address' }] },
   { type: 'function', name: 'allowedToken', stateMutability: 'view', inputs: [{ name: 'token', type: 'address' }], outputs: [{ name: '', type: 'bool' }] },
   { type: 'function', name: 'tokenDecimals', stateMutability: 'view', inputs: [{ name: 'token', type: 'address' }], outputs: [{ name: '', type: 'uint8' }] },
   { type: 'function', name: 'UNIT', stateMutability: 'view', inputs: [], outputs: [{ name: '', type: 'uint256' }] },
@@ -29,6 +31,11 @@ export const contractAbi = [
   { type: 'function', name: 'withdraw', stateMutability: 'nonpayable', inputs: [{ name: 'payToken', type: 'address' }, { name: 'amount', type: 'uint256' }], outputs: [] },
   { type: 'function', name: 'reinvest', stateMutability: 'nonpayable', inputs: [{ name: 'amount', type: 'uint256' }], outputs: [] },
   { type: 'function', name: 'upgradePlan', stateMutability: 'nonpayable', inputs: [{ name: 'plan', type: 'uint8' }], outputs: [] },
+  { type: 'function', name: 'setToken', stateMutability: 'nonpayable', inputs: [{ name: 'token', type: 'address' }, { name: 'allowed', type: 'bool' }], outputs: [] },
+  { type: 'function', name: 'setBlocked', stateMutability: 'nonpayable', inputs: [{ name: 'user', type: 'address' }, { name: 'blocked', type: 'bool' }], outputs: [] },
+  { type: 'function', name: 'setRoiRate', stateMutability: 'nonpayable', inputs: [{ name: 'plan', type: 'uint8' }, { name: 'bpsPerMonth', type: 'uint256' }], outputs: [] },
+  { type: 'function', name: 'setPlanMultiplier', stateMutability: 'nonpayable', inputs: [{ name: 'plan', type: 'uint8' }, { name: 'multiplierBps', type: 'uint256' }], outputs: [] },
+  { type: 'function', name: 'setPlanMinDirects', stateMutability: 'nonpayable', inputs: [{ name: 'plan', type: 'uint8' }, { name: 'directs', type: 'uint256' }], outputs: [] },
 ] as const satisfies Abi
 
 export const erc20Abi = [

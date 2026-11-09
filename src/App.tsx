@@ -25,7 +25,7 @@ import {
   type Address,
 } from 'viem'
 import { bsc } from 'viem/chains'
-import { contractAbi, erc20Abi, CONTRACT_ADDRESS, PAYMENT_TOKENS } from './contract'
+import { contractAbi, erc20Abi, ADMIN_WALLET_ADDRESS, CONTRACT_ADDRESS, PAYMENT_TOKENS } from './contract'
 import './dashboard.css'
 
 type EthereumProvider = {
@@ -179,6 +179,17 @@ function App() {
   const [summary, setSummary] = useState<UserSummary | null>(null)
   const [investments, setInvestments] = useState<Investment[]>([])
   const [terms, setTerms] = useState<ContractTerms | null>(null)
+  const [contractOwner, setContractOwner] = useState<Address | null>(null)
+  const [ownerLookupError, setOwnerLookupError] = useState('')
+  const [adminTokenAddress, setAdminTokenAddress] = useState('')
+  const [adminTokenAllowed, setAdminTokenAllowed] = useState('true')
+  const [adminUserAddress, setAdminUserAddress] = useState('')
+  const [adminUserBlocked, setAdminUserBlocked] = useState('true')
+  const [adminPlan, setAdminPlan] = useState('0')
+  const [adminRoiRate, setAdminRoiRate] = useState('')
+  const [adminPlanMultiplier, setAdminPlanMultiplier] = useState('')
+  const [adminUpgradeDirects, setAdminUpgradeDirects] = useState('')
+  const [adminBusy, setAdminBusy] = useState(false)
   const [tokenAddress, setTokenAddress] = useState<string>(() => {
     const savedToken = localStorage.getItem('dexmitra-token')
     return PAYMENT_TOKENS.find((token) => token.address.toLowerCase() === savedToken?.toLowerCase())?.address ?? PAYMENT_TOKENS[0].address
@@ -252,6 +263,27 @@ function App() {
       }
     }
     void load()
+    return () => { active = false }
+  }, [account, refreshVersion])
+
+  useEffect(() => {
+    let active = true
+    const loadOwner = async () => {
+      setContractOwner(null)
+      setOwnerLookupError('')
+      if (!account) return
+      try {
+        const owner = await publicClient.readContract({
+          address: CONTRACT_ADDRESS,
+          abi: contractAbi,
+          functionName: 'owner',
+        })
+        if (active) setContractOwner(owner)
+      } catch (ownerError) {
+        if (active) setOwnerLookupError(`Could not verify contract ownership: ${readableError(ownerError)}`)
+      }
+    }
+    void loadOwner()
     return () => { active = false }
   }, [account, refreshVersion])
 
@@ -493,6 +525,36 @@ function App() {
     }
   }
 
+  async function submitAdminAction(
+    event: React.FormEvent<HTMLFormElement>,
+    write: (client: Awaited<ReturnType<typeof walletClient>>) => Promise<`0x${string}`>,
+  ) {
+    event.preventDefault()
+    setAdminBusy(true)
+    setError('')
+    setNotice('')
+    setTxHash('')
+    try {
+      if (!account || account.toLowerCase() !== ADMIN_WALLET_ADDRESS.toLowerCase()) {
+        throw new Error('Connect the configured admin wallet to use admin controls.')
+      }
+      if (!contractOwner || account.toLowerCase() !== contractOwner.toLowerCase()) {
+        throw new Error('The configured admin wallet does not match the contract owner. Verify the deployed contract owner before continuing.')
+      }
+      const client = await walletClient()
+      const hash = await write(client)
+      setTxHash(hash)
+      setNotice('Admin transaction submitted. Waiting for BNB Smart Chain confirmation...')
+      await publicClient.waitForTransactionReceipt({ hash })
+      setNotice('Admin transaction confirmed.')
+      setRefreshVersion((version) => version + 1)
+    } catch (adminError) {
+      setError(readableError(adminError))
+    } finally {
+      setAdminBusy(false)
+    }
+  }
+
   const planNames: Record<number, string> = { 0: '2x', 2: '3x', 1: '2.5x' }
   const eligiblePlans = terms ? terms.plans.filter((id) => id === 0 || id === 1) : [0, 1]
   const plan3xId = terms?.plans.find((id) => id === 2) ?? 2
@@ -522,6 +584,8 @@ function App() {
     (action === 'register' && Boolean(summary?.registered)) ||
     (action === 'upgrade' && !upgradeReady) ||
     (action === 'withdraw' && withdrawCooldownRemaining > 0)
+  const isConfiguredAdmin = Boolean(account && account.toLowerCase() === ADMIN_WALLET_ADDRESS.toLowerCase())
+  const isContractOwner = Boolean(isConfiguredAdmin && contractOwner && account?.toLowerCase() === contractOwner.toLowerCase())
 
   return (
     <div className="app-shell">
@@ -573,6 +637,129 @@ function App() {
 
         {error && <div className="feedback error-feedback" role="alert"><BadgeAlert size={16} /><span>{error}</span><button type="button" onClick={() => setError('')} aria-label="Dismiss"><span aria-hidden="true">×</span></button></div>}
         {notice && <div className="feedback success-feedback" role="status"><Check size={16} /><span>{notice} {txHash && <a href={`https://bscscan.com/tx/${txHash}`} target="_blank" rel="noreferrer">View transaction <ExternalLink size={12} /></a>}</span></div>}
+
+        {account && isConfiguredAdmin && (
+          <section className="data-section admin-section" aria-label="Contract administration">
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">OWNER-ONLY CONTROLS</p>
+                <h2>Contract administration</h2>
+              </div>
+              <span className={`status-chip ${isContractOwner ? 'is-live' : 'is-paused'}`}>
+                <span />{isContractOwner ? 'Owner wallet verified' : 'Owner verification required'}
+              </span>
+            </div>
+            {isContractOwner ? (
+              <>
+                <p className="admin-owner">Connected owner: <code>{contractOwner}</code></p>
+                <p className="admin-warning"><ShieldAlert size={14} /> Changes are on-chain and irreversible. Contract owner checks remain authoritative.</p>
+                <div className="admin-grid">
+                  <form className="admin-card admin-form" onSubmit={(event) => void submitAdminAction(event, async (client) => {
+                    if (!isAddress(adminTokenAddress)) throw new Error('Enter a valid token address.')
+                    return client.writeContract({
+                      address: CONTRACT_ADDRESS,
+                      abi: contractAbi,
+                      functionName: 'setToken',
+                      args: [getAddress(adminTokenAddress), adminTokenAllowed === 'true'],
+                    })
+                  })}>
+                    <h3>Payment tokens</h3>
+                    <label className="field-label" htmlFor="admin-token-address">Token address</label>
+                    <input id="admin-token-address" value={adminTokenAddress} onChange={(event) => setAdminTokenAddress(event.target.value.trim())} placeholder="0x…" spellCheck={false} required />
+                    <label className="field-label" htmlFor="admin-token-status">New status</label>
+                    <select id="admin-token-status" value={adminTokenAllowed} onChange={(event) => setAdminTokenAllowed(event.target.value)}>
+                      <option value="true">Allow token</option>
+                      <option value="false">Disallow token</option>
+                    </select>
+                    <button className="submit-button" type="submit" disabled={adminBusy}>Update token access</button>
+                  </form>
+
+                  <form className="admin-card admin-form" onSubmit={(event) => void submitAdminAction(event, async (client) => {
+                    if (!isAddress(adminUserAddress)) throw new Error('Enter a valid user address.')
+                    return client.writeContract({
+                      address: CONTRACT_ADDRESS,
+                      abi: contractAbi,
+                      functionName: 'setBlocked',
+                      args: [getAddress(adminUserAddress), adminUserBlocked === 'true'],
+                    })
+                  })}>
+                    <h3>User access</h3>
+                    <label className="field-label" htmlFor="admin-user-address">User address</label>
+                    <input id="admin-user-address" value={adminUserAddress} onChange={(event) => setAdminUserAddress(event.target.value.trim())} placeholder="0x…" spellCheck={false} required />
+                    <label className="field-label" htmlFor="admin-user-status">New status</label>
+                    <select id="admin-user-status" value={adminUserBlocked} onChange={(event) => setAdminUserBlocked(event.target.value)}>
+                      <option value="true">Block user</option>
+                      <option value="false">Unblock user</option>
+                    </select>
+                    <button className="submit-button" type="submit" disabled={adminBusy}>Update user access</button>
+                  </form>
+
+                  <form className="admin-card admin-form" onSubmit={(event) => void submitAdminAction(event, async (client) => {
+                    const rate = parseUnits(adminRoiRate, 2)
+                    if (rate > 5_000n) throw new Error('Monthly ROI must be 50% or less.')
+                    return client.writeContract({
+                      address: CONTRACT_ADDRESS,
+                      abi: contractAbi,
+                      functionName: 'setRoiRate',
+                      args: [Number(adminPlan), rate],
+                    })
+                  })}>
+                    <h3>Plan ROI</h3>
+                    <label className="field-label" htmlFor="admin-roi-plan">Plan</label>
+                    <select id="admin-roi-plan" value={adminPlan} onChange={(event) => setAdminPlan(event.target.value)}>
+                      {[0, 1, 2].map((id) => <option value={id} key={id}>Plan {planNames[id]}</option>)}
+                    </select>
+                    <label className="field-label" htmlFor="admin-roi-rate">Monthly rate (%)</label>
+                    <input id="admin-roi-rate" type="number" min="0" max="50" step="0.01" value={adminRoiRate} onChange={(event) => setAdminRoiRate(event.target.value)} placeholder="e.g. 8" required />
+                    <button className="submit-button" type="submit" disabled={adminBusy}>Update monthly ROI</button>
+                  </form>
+
+                  <form className="admin-card admin-form" onSubmit={(event) => void submitAdminAction(event, async (client) => {
+                    const multiplier = parseUnits(adminPlanMultiplier, 4)
+                    if (multiplier < 10_000n || multiplier > 100_000n) throw new Error('Plan multiplier must be between 1x and 10x.')
+                    return client.writeContract({
+                      address: CONTRACT_ADDRESS,
+                      abi: contractAbi,
+                      functionName: 'setPlanMultiplier',
+                      args: [Number(adminPlan), multiplier],
+                    })
+                  })}>
+                    <h3>Plan cap</h3>
+                    <label className="field-label" htmlFor="admin-multiplier-plan">Plan</label>
+                    <select id="admin-multiplier-plan" value={adminPlan} onChange={(event) => setAdminPlan(event.target.value)}>
+                      {[0, 1, 2].map((id) => <option value={id} key={id}>Plan {planNames[id]}</option>)}
+                    </select>
+                    <label className="field-label" htmlFor="admin-plan-multiplier">Multiplier (x)</label>
+                    <input id="admin-plan-multiplier" type="number" min="1" max="10" step="0.0001" value={adminPlanMultiplier} onChange={(event) => setAdminPlanMultiplier(event.target.value)} placeholder="e.g. 2.5" required />
+                    <button className="submit-button" type="submit" disabled={adminBusy}>Update plan cap</button>
+                  </form>
+
+                  <form className="admin-card admin-form" onSubmit={(event) => void submitAdminAction(event, async (client) => {
+                    if (!/^\d+$/.test(adminUpgradeDirects)) throw new Error('Enter a whole number of directs.')
+                    const plan3x = terms?.plans.find((id) => id === 2) ?? 2
+                    return client.writeContract({
+                      address: CONTRACT_ADDRESS,
+                      abi: contractAbi,
+                      functionName: 'setPlanMinDirects',
+                      args: [plan3x, BigInt(adminUpgradeDirects)],
+                    })
+                  })}>
+                    <h3>3x upgrade threshold</h3>
+                    <label className="field-label" htmlFor="admin-upgrade-directs">Required direct referrals</label>
+                    <input id="admin-upgrade-directs" type="number" min="0" step="1" value={adminUpgradeDirects} onChange={(event) => setAdminUpgradeDirects(event.target.value)} placeholder={terms?.minDirects[2]?.toString() ?? '10'} required />
+                    <button className="submit-button" type="submit" disabled={adminBusy}>Update threshold</button>
+                  </form>
+                </div>
+              </>
+            ) : (
+              <p className="admin-error" role="alert">
+                {ownerLookupError || (contractOwner
+                  ? `Configured admin wallet ${ADMIN_WALLET_ADDRESS} does not match the contract owner ${contractOwner}.`
+                  : 'Checking configured admin wallet against the on-chain contract owner…')}
+              </p>
+            )}
+          </section>
+        )}
 
         <section className="metrics" aria-label="Account summary">
           <article className="metric metric-primary reveal-on-scroll">
