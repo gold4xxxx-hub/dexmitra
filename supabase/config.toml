@@ -1,0 +1,4 @@
+project_id = "dexmitra"
+
+[functions.secured-users]
+verify_jwt = false

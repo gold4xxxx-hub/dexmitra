@@ -11,6 +11,35 @@ npm run dev
 
 The app reads contract state from the BNB Smart Chain public RPC. A browser wallet is required for transactions. The payment-token address must be entered in the dashboard and confirmed as allowed by the contract before token actions are enabled.
 
+## Secured-user storage
+
+The 2x registration form stores its details and ID document through the `secured-users` Supabase Edge Function. The browser only uses the Supabase project URL and publishable key; never put a service-role key in the frontend or commit it to the repository. ID documents use a private Storage bucket, and only the configured contract-owner wallet can retrieve short-lived file links.
+
+1. Copy `.env.example` to `.env.local` and set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`.
+2. Link this project to Supabase and apply the migration:
+
+   ```sh
+   supabase login
+   supabase link --project-ref YOUR_PROJECT_REF
+   supabase db push
+   ```
+
+3. Configure the Edge Function secrets with the current contract owner and exact website origins:
+
+   ```sh
+   supabase secrets set SECURED_USERS_ADMIN_WALLET=OWNER_WALLET SECURED_USERS_ALLOWED_ORIGINS=https://dexmitra.com,http://localhost:5173
+   ```
+
+4. Deploy the function:
+
+   ```sh
+   supabase functions deploy secured-users
+   ```
+
+For local Edge Function testing, copy `supabase/functions/.env.example` to `supabase/functions/.env` and fill it with local Supabase values. This file is ignored by Git; never expose or commit the service-role key.
+
+The function verifies one-time wallet signatures for submissions and admin reads. The migration denies direct table access to browser roles and creates a private ID-document bucket. Registration for the 2x plan remains blocked until a secured-user record is successfully saved for the connected wallet. The contract itself does not enforce this requirement, so direct contract calls can bypass the dashboard gate.
+
 ## Verify and build
 
 ```sh

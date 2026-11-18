@@ -27,6 +27,13 @@ import {
 } from 'viem'
 import { bsc } from 'viem/chains'
 import { contractAbi, erc20Abi, ADMIN_WALLET_ADDRESS, CONTRACT_ADDRESS, PAYMENT_TOKENS } from './contract'
+import {
+  listSecuredUserRecords,
+  requestSecuredUserChallenge,
+  securedUsersApiConfigured,
+  submitSecuredUserRecord,
+  type SecuredUserRecord,
+} from './securedUsersApi'
 import './dashboard.css'
 
 type EthereumProvider = {
@@ -206,6 +213,15 @@ function App() {
   const [adminPlanMultiplier, setAdminPlanMultiplier] = useState('')
   const [adminUpgradeDirects, setAdminUpgradeDirects] = useState('')
   const [adminBusy, setAdminBusy] = useState(false)
+  const [adminPage, setAdminPage] = useState<'dashboard' | 'secured-users'>('dashboard')
+  const [securedUsers, setSecuredUsers] = useState<SecuredUserRecord[]>([])
+  const [securedUsersLoading, setSecuredUsersLoading] = useState(false)
+  const [securedUsersRefresh, setSecuredUsersRefresh] = useState(0)
+  const [securedUserSaveBusy, setSecuredUserSaveBusy] = useState(false)
+  const [securedUserRecordId, setSecuredUserRecordId] = useState<string | null>(null)
+  const [securedUserRecordWallet, setSecuredUserRecordWallet] = useState<Address | null>(null)
+  const [securedUserError, setSecuredUserError] = useState('')
+  const [securedUserFormValid, setSecuredUserFormValid] = useState(false)
   const [tokenAddress, setTokenAddress] = useState<string>(() => {
     const savedToken = localStorage.getItem('dexmitra-token')
     return PAYMENT_TOKENS.find((token) => token.address.toLowerCase() === savedToken?.toLowerCase())?.address ?? PAYMENT_TOKENS[0].address
@@ -488,6 +504,77 @@ function App() {
     return createWalletClient({ account, chain: bsc, transport: custom(provider as never) })
   }
 
+  async function signSecuredUserRequest(purpose: 'submit' | 'list') {
+    if (!account) throw new Error('Connect a wallet first.')
+    const challenge = await requestSecuredUserChallenge(account, purpose)
+    const client = await walletClient()
+    const signature = await client.signMessage({ message: challenge.message })
+    return { nonce: challenge.nonce, signature }
+  }
+
+  async function saveSecuredUserDetails(form: HTMLFormElement) {
+    if (!account) throw new Error('Connect your wallet first.')
+    if (!securedUsersApiConfigured) throw new Error('Supabase storage is not configured.')
+
+    const values = new FormData(form)
+    const value = (name: string) => {
+      const field = values.get(name)
+      if (typeof field !== 'string' || !field.trim()) throw new Error(`Enter ${name}.`)
+      return field.trim()
+    }
+
+    const mobileNumber = value('2x mobile number')
+    const idDocument = values.get('2x ID document')
+    const securityAsset = value('2x security asset')
+    const quantity = value('2x quantity')
+    const weightGrams = value('2x weight')
+    const price = value('2x price')
+    const referrerName = value('2x referrer name')
+    const referrerMobileNumber = value('2x referrer mobile number')
+    const validPhone = (phone: string) => /^\+?[0-9\s().-]{5,40}$/.test(phone) && (phone.match(/\d/g)?.length ?? 0) >= 5
+    if (!validPhone(mobileNumber) || !validPhone(referrerMobileNumber)) {
+      throw new Error('Enter valid user and referrer mobile numbers.')
+    }
+    if (!(idDocument instanceof File) || idDocument.size === 0 || idDocument.size > 10 * 1024 * 1024) {
+      throw new Error('Select an ID file no larger than 10 MB.')
+    }
+    if (!['application/pdf', 'image/jpeg', 'image/png'].includes(idDocument.type)) {
+      throw new Error('ID document must be a PDF, JPG, or PNG file.')
+    }
+    if (securityAsset !== 'Gold coin' && securityAsset !== 'Silver coin') {
+      throw new Error('Select Gold coin or Silver coin.')
+    }
+    if (!/^[1-9]\d*$/.test(quantity) || !Number.isSafeInteger(Number(quantity))) {
+      throw new Error('Quantity must be a positive whole number.')
+    }
+    if (!/^(?:\d+|\d*\.\d+)$/.test(weightGrams) || !Number.isFinite(Number(weightGrams)) || Number(weightGrams) <= 0) {
+      throw new Error('Weight must be greater than zero grams.')
+    }
+    if (!/^(?:\d+|\d*\.\d+)$/.test(price) || !Number.isFinite(Number(price)) || Number(price) <= 0) {
+      throw new Error('Price must be greater than zero.')
+    }
+    if (!isAddress(referrer)) throw new Error('Enter a valid referrer address before saving.')
+
+    const auth = await signSecuredUserRequest('submit')
+    const record = await submitSecuredUserRecord({
+      walletAddress: account,
+      mobileNumber,
+      idDocument,
+      securityAsset,
+      quantity,
+      weightGrams,
+      price,
+      referrerName,
+      referrerMobileNumber,
+      referrerAddress: getAddress(referrer),
+    }, auth)
+
+    setSecuredUserRecordId(record.id)
+    setSecuredUserRecordWallet(account)
+    setSecuredUserFormValid(true)
+    setSecuredUserError('')
+  }
+
   async function approveToken(spenderAmount: bigint) {
     if (!account || !isAddress(tokenAddress)) throw new Error('Enter a valid payment-token address first.')
     if (tokenAllowed !== true) throw new Error('This token is not confirmed as allowed by the contract.')
@@ -511,6 +598,10 @@ function App() {
       if (!account) throw new Error('Connect your wallet first.')
       if (!terms || terms.paused) throw new Error('Contract actions are currently unavailable.')
       if (action === 'register' && summary?.registered) throw new Error('This wallet is already registered.')
+      if (action === 'register' && Number(plan) === terms.plans[0] &&
+        (!securedUserRecordId || securedUserRecordWallet?.toLowerCase() !== account.toLowerCase())) {
+        throw new Error('Save secured-user details for this wallet before registering for the 2x plan.')
+      }
       const client = await walletClient()
       const token = isAddress(tokenAddress) ? getAddress(tokenAddress) : null
       let hash: `0x${string}`
@@ -621,21 +712,50 @@ function App() {
     setAction(next)
     setNotice('')
     setError('')
+    setSecuredUserFormValid(false)
+    setSecuredUserRecordId(null)
+    setSecuredUserRecordWallet(null)
     if (next === 'withdraw' && tokenAddress.toLowerCase() === '0x5c0d286f3812da7f6bd766b7aadadc7059938de8') {
       setTokenAddress(PAYMENT_TOKENS[0].address)
     }
   }
+  const requiresSecuredUserDetails = action === 'register' && Boolean(terms && Number(plan) === terms.plans[0])
   const submitDisabled =
     busy ||
     !account ||
     loading ||
     Boolean(terms?.paused) ||
     (action === 'register' && Boolean(summary?.registered)) ||
+    (requiresSecuredUserDetails && (!securedUserFormValid || !securedUserRecordId || securedUserRecordWallet?.toLowerCase() !== account?.toLowerCase())) ||
     (action === 'upgrade' && !upgradeReady) ||
     (action === 'withdraw' && withdrawCooldownRemaining > 0)
   const isConfiguredAdmin = Boolean(account && account.toLowerCase() === ADMIN_WALLET_ADDRESS.toLowerCase())
   const isContractOwner = Boolean(account && contractOwner && account.toLowerCase() === contractOwner.toLowerCase())
   const isPendingContractOwner = Boolean(account && pendingContractOwner && account.toLowerCase() === pendingContractOwner.toLowerCase())
+
+  useEffect(() => {
+    if (adminPage !== 'secured-users' || !isContractOwner || !account) return
+    let active = true
+
+    void (async () => {
+      try {
+        if (!securedUsersApiConfigured) throw new Error('Configure the Supabase URL and publishable key to load secured users.')
+        const challenge = await requestSecuredUserChallenge(account, 'list')
+        const provider = window.ethereum
+        if (!provider) throw new Error('Connect a browser wallet to sign the admin request.')
+        const client = createWalletClient({ account, chain: bsc, transport: custom(provider as never) })
+        const signature = await client.signMessage({ message: challenge.message })
+        const result = await listSecuredUserRecords(account, { nonce: challenge.nonce, signature })
+        if (active) setSecuredUsers(result.records)
+      } catch (loadError) {
+        if (active) setSecuredUserError(readableError(loadError))
+      } finally {
+        if (active) setSecuredUsersLoading(false)
+      }
+    })()
+
+    return () => { active = false }
+  }, [adminPage, account, isContractOwner, securedUsersRefresh])
 
   return (
     <div className="app-shell">
@@ -645,6 +765,22 @@ function App() {
           <span>dexmitra<span className="brand-period">.</span></span>
         </a>
         <div className="topbar-right">
+          {isContractOwner && (
+            <button
+              className="admin-page-button"
+              type="button"
+              onClick={() => {
+                const openingRecords = adminPage !== 'secured-users'
+                if (openingRecords) {
+                  setSecuredUsersLoading(true)
+                  setSecuredUserError('')
+                }
+                setAdminPage(openingRecords ? 'secured-users' : 'dashboard')
+              }}
+            >
+              {adminPage === 'secured-users' ? 'Dashboard' : 'Secured users'}
+            </button>
+          )}
           <a className="network-pill" href="https://bscscan.com" target="_blank" rel="noreferrer">
             <span className="network-dot" /> BNB Chain <ExternalLink size={12} />
           </a>
@@ -658,6 +794,61 @@ function App() {
         </div>
       </header>
 
+      {isContractOwner && adminPage === 'secured-users' ? (
+        <main className="main-content secured-users-page">
+          <div className="page-heading">
+            <div>
+              <p className="eyebrow">2X PLAN · ADMIN ONLY</p>
+              <h1>Secured users</h1>
+              <p className="subheading">Stored security records for users on the 2x plan.</p>
+            </div>
+            <button
+              className="icon-button refresh-button"
+              type="button"
+              onClick={() => {
+                setSecuredUsersLoading(true)
+                setSecuredUserError('')
+                setSecuredUsersRefresh((version) => version + 1)
+              }}
+              aria-label="Refresh secured-user records"
+              title="Refresh"
+            >
+              <RefreshCw size={15} />
+            </button>
+          </div>
+
+          <div className="secured-users-warning" role="note">
+            <ShieldAlert size={16} />
+            <span>Records are held in a private bucket. Access requires a signature from the current contract owner; ID links expire after one minute.</span>
+          </div>
+
+          {securedUserError && <p className="admin-error" role="alert">{securedUserError}</p>}
+          {securedUsersLoading ? (
+            <p className="secured-user-empty">Loading secured-user records…</p>
+          ) : securedUsers.length === 0 ? (
+            <p className="secured-user-empty">No secured-user records found.</p>
+          ) : (
+            <section className="secured-user-records" aria-label="Stored secured-user records">
+              {securedUsers.map((record) => (
+                <article className="secured-user-record" key={record.id}>
+                  <div className="secured-user-record-heading">
+                    <strong>{record.walletAddress}</strong>
+                    <span>2x plan</span>
+                  </div>
+                  <dl className="secured-user-details">
+                    <div><dt>Mobile</dt><dd>{record.mobileNumber}</dd></div>
+                    <div><dt>ID document</dt><dd><a href={record.idFileUrl} target="_blank" rel="noreferrer">{record.idFileName} <ExternalLink size={12} /></a></dd></div>
+                    <div><dt>Security</dt><dd>{record.quantity} × {record.securityAsset}, {record.weightGrams} g</dd></div>
+                    <div><dt>Price</dt><dd>{record.price}</dd></div>
+                    <div><dt>Referred by</dt><dd>{record.referrerName}<br />{record.referrerMobileNumber}<br />{record.referrerAddress}</dd></div>
+                    <div><dt>Added</dt><dd>{new Date(record.createdAt).toLocaleString()}</dd></div>
+                  </dl>
+                </article>
+              ))}
+            </section>
+          )}
+        </main>
+      ) : (
       <main id="top" className="main-content">
         <div className="page-heading">
           <div>
@@ -1527,6 +1718,7 @@ function App() {
                     type="button"
                     role="tab"
                     aria-selected={action === tab}
+                    disabled={securedUserSaveBusy || busy}
                     key={tab}
                     onClick={() => selectedTab(tab)}
                   >
@@ -1543,13 +1735,98 @@ function App() {
                   <>
                     <label className="field-label" htmlFor="referrer">Referrer address</label>
                     <div className="referrer-segment">
-                      <button type="button" className={`referrer-btn ${referrerMode === 'manual' ? 'selected' : ''}`} onClick={() => { setReferrerMode('manual'); if (referrer === ZERO_REFERRER) setReferrer('') }}>Enter referrer</button>
-                      <button type="button" className={`referrer-btn ${referrerMode === 'root' ? 'selected' : ''}`} onClick={() => { setReferrerMode('root'); setReferrer(ZERO_REFERRER) }}>No referrer</button>
+                      <button type="button" className={`referrer-btn ${referrerMode === 'manual' ? 'selected' : ''}`} disabled={securedUserSaveBusy || busy} onClick={() => { setReferrerMode('manual'); if (referrer === ZERO_REFERRER) setReferrer(''); setSecuredUserRecordId(null); setSecuredUserRecordWallet(null); setSecuredUserFormValid(false) }}>Enter referrer</button>
+                      <button type="button" className={`referrer-btn ${referrerMode === 'root' ? 'selected' : ''}`} disabled={securedUserSaveBusy || busy} onClick={() => { setReferrerMode('root'); setReferrer(ZERO_REFERRER); setSecuredUserRecordId(null); setSecuredUserRecordWallet(null); setSecuredUserFormValid(false) }}>No referrer</button>
                     </div>
-                    <input id="referrer" value={referrer} onChange={(event) => setReferrer(event.target.value.trim())} placeholder="0x…" spellCheck={false} autoComplete="off" disabled={referrerMode === 'root'} />
+                    <input id="referrer" value={referrer} onChange={(event) => { setReferrer(event.target.value.trim()); setSecuredUserRecordId(null); setSecuredUserRecordWallet(null); setSecuredUserFormValid(false) }} placeholder="0x…" spellCheck={false} autoComplete="off" disabled={referrerMode === 'root' || securedUserSaveBusy || busy} />
                     <p className="form-hint">{referrerMode === 'root' ? 'Root registration: referrer will be set to 0x0000…0000 automatically.' : 'Must be an already-registered account address.'}</p>
                     <label className="field-label" htmlFor="registration-plan">Plan</label>
-                    <select id="registration-plan" value={plan} onChange={(event) => setPlan(event.target.value)}>{eligiblePlans.map((planId) => <option value={planId} key={planId}>Plan {planNames[planId]}</option>)}</select>
+                    <select id="registration-plan" value={plan} disabled={securedUserSaveBusy || busy} onChange={(event) => { setPlan(event.target.value); setSecuredUserFormValid(false); setSecuredUserRecordId(null); setSecuredUserRecordWallet(null) }}>{eligiblePlans.map((planId) => <option value={planId} key={planId}>Plan {planNames[planId]}</option>)}</select>
+                    {requiresSecuredUserDetails && (
+                      <section className="secured-user-registration" aria-label="Required 2x plan security details">
+                        <div>
+                          <p className="eyebrow">REQUIRED FOR 2X PLAN</p>
+                          <h3>Secured users details</h3>
+                        </div>
+                        <p className="secured-user-registration-warning" role="note">
+                          {securedUsersApiConfigured
+                            ? 'Your ID document is stored privately. Sign the wallet authorization to save these details before registering for 2x.'
+                            : 'Supabase is not configured. Details cannot be saved, so 2x registration is unavailable until secure storage is set up.'}
+                        </p>
+                        <fieldset
+                          className="secured-user-registration-fields"
+                          disabled={securedUserSaveBusy || busy}
+                          onChange={(event) => {
+                            const fields = Array.from(event.currentTarget.querySelectorAll<HTMLInputElement | HTMLSelectElement>('input, select'))
+                            const idFile = fields.find((field): field is HTMLInputElement => field instanceof HTMLInputElement && field.type === 'file')
+                            const file = idFile?.files?.[0]
+                            const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png']
+                            const validFile = Boolean(file && allowedTypes.includes(file.type) && file.size <= 10 * 1024 * 1024)
+                            setSecuredUserFormValid(fields.every((field) => field.checkValidity()) && validFile)
+                            setSecuredUserRecordId(null)
+                            setSecuredUserRecordWallet(null)
+                          }}
+                        >
+                          <label className="secured-user-field">
+                            <span className="field-label">Mobile number</span>
+                            <input name="2x mobile number" type="tel" autoComplete="off" placeholder="Mobile number" required />
+                          </label>
+                          <label className="secured-user-field">
+                            <span className="field-label">ID document (PDF, JPG, PNG; max 10 MB)</span>
+                            <input name="2x ID document" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" required />
+                          </label>
+                          <label className="secured-user-field">
+                            <span className="field-label">Security asset</span>
+                            <select name="2x security asset" defaultValue="Gold coin">
+                              <option>Gold coin</option>
+                              <option>Silver coin</option>
+                            </select>
+                          </label>
+                          <label className="secured-user-field">
+                            <span className="field-label">Quantity</span>
+                            <input name="2x quantity" type="number" min="1" step="1" placeholder="Number of coins" required />
+                          </label>
+                          <label className="secured-user-field">
+                            <span className="field-label">Weight (g)</span>
+                            <input name="2x weight" type="number" min="0.01" step="0.01" placeholder="Total weight in grams" required />
+                          </label>
+                          <label className="secured-user-field">
+                            <span className="field-label">Price</span>
+                            <input name="2x price" type="number" min="0.01" step="0.01" placeholder="Price" required />
+                          </label>
+                          <label className="secured-user-field">
+                            <span className="field-label">Referrer name</span>
+                            <input name="2x referrer name" type="text" autoComplete="off" placeholder="Referrer name" required />
+                          </label>
+                          <label className="secured-user-field">
+                            <span className="field-label">Referrer mobile number</span>
+                            <input name="2x referrer mobile number" type="tel" autoComplete="off" placeholder="Referrer mobile number" required />
+                          </label>
+                        </fieldset>
+                        <button
+                          className="submit-button"
+                          type="button"
+                          disabled={!securedUsersApiConfigured || !securedUserFormValid || securedUserSaveBusy || busy}
+                          onClick={(event) => {
+                            const form = event.currentTarget.form
+                            if (!form) {
+                              setSecuredUserError('Could not access the secured-user form.')
+                              return
+                            }
+                            setSecuredUserSaveBusy(true)
+                            setSecuredUserError('')
+                            void saveSecuredUserDetails(form)
+                              .catch((saveError) => setSecuredUserError(readableError(saveError)))
+                              .finally(() => setSecuredUserSaveBusy(false))
+                          }}
+                        >
+                          {securedUserSaveBusy ? 'Saving securely…' : securedUserRecordId ? 'Details saved' : 'Save secured details'}
+                        </button>
+                        {securedUserRecordId && securedUserRecordWallet?.toLowerCase() === account?.toLowerCase() && (
+                          <p className="secured-user-feedback" role="status">Details are saved for this wallet. You can continue with 2x registration.</p>
+                        )}
+                      </section>
+                    )}
                   </>
                 )}
 
@@ -1599,7 +1876,7 @@ function App() {
                 </div>
 
                 <button className={`submit-button action-button-${action}`} type="submit" disabled={submitDisabled}>
-                  {busy ? <><span className="loader"></span> Processing</> : <>{action === 'withdraw' ? <ArrowUpRight size={15} /> : <ArrowDownLeft size={15} />}{action === 'upgrade' ? 'Confirm plan change' : action === 'register' ? 'Register account' : `${action[0].toUpperCase()}${action.slice(1)}`}</>}
+                  {busy ? <><span className="loader"></span> Processing</> : <>{action === 'withdraw' ? <ArrowUpRight size={15} /> : <ArrowDownLeft size={15} />}{action === 'upgrade' ? 'Confirm plan change' : action === 'register' && requiresSecuredUserDetails && !securedUserRecordId ? 'Save secured details first' : action === 'register' ? 'Register account' : `${action[0].toUpperCase()}${action.slice(1)}`}</>}
                 </button>
                 {!account && <p className="connect-hint">Connect a wallet to enable transactions.</p>}
                 {terms?.paused && <p className="connect-hint">Contract is paused. New transactions are disabled.</p>}
@@ -1614,6 +1891,7 @@ function App() {
           <span>Contract values are provided as-is; verify them on <a href={`https://bscscan.com/address/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer">BscScan <ExternalLink size={11} /></a></span>
         </footer>
       </main>
+      )}
     </div>
   )
 }
