@@ -529,7 +529,7 @@ function App() {
         const value = parseUnits(amount, tokenDecimals)
         const minInvest = minimumInvestment / tokenScale
         const maxInvest = maximumInvestment / tokenScale
-        if (minInvest > maxInvest) throw new Error('The contract investment limits do not overlap the app’s 1,000–100,000-unit range.')
+        if (minInvest > maxInvest) throw new Error('The contract investment limits do not overlap the app’s 100–100,000-unit range.')
         if (value < minInvest || value > maxInvest) throw new Error(`Amount must be between ${prettyAmount(minInvest, tokenDecimals)} and ${prettyAmount(maxInvest, tokenDecimals)} ${tokenSymbol}.`)
         await approveToken(value)
         hash = await client.writeContract({ address: CONTRACT_ADDRESS, abi: contractAbi, functionName: 'invest', args: [parseUnits(amount, 18), token] })
@@ -605,7 +605,7 @@ function App() {
   const planRows = [...eligiblePlans]
   const unitDecimals = terms?.unit.toString().length ? terms.unit.toString().length - 1 : 18
   const tokenScale = 10n ** BigInt(Math.max(0, 18 - tokenDecimals))
-  const appMinimumInvestment = 1_000n * (terms?.unit ?? 10n ** 18n)
+  const appMinimumInvestment = 100n * (terms?.unit ?? 10n ** 18n)
   const appMaximumInvestment = 100_000n * (terms?.unit ?? 10n ** 18n)
   const minimumInvestment = terms
     ? terms.minInvest > appMinimumInvestment
