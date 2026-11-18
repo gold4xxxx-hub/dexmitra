@@ -17,6 +17,7 @@ import {
   createPublicClient,
   createWalletClient,
   custom,
+  fallback,
   formatUnits,
   getAddress,
   http,
@@ -94,7 +95,15 @@ type ContractTerms = {
 type Action = 'register' | 'invest' | 'withdraw' | 'reinvest' | 'upgrade'
 const ZERO_REFERRER = '0x0000000000000000000000000000000000000000' as Address
 
-const publicClient = createPublicClient({ chain: bsc, transport: http() })
+const publicClient = createPublicClient({
+  chain: bsc,
+  batch: { multicall: true },
+  transport: fallback([
+    http('https://bsc-dataseed.binance.org/', { retryCount: 0 }),
+    http('https://bsc-rpc.publicnode.com', { retryCount: 0 }),
+    http(undefined, { retryCount: 0 }),
+  ]),
+})
 
 function shortAddress(address: string) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`
